@@ -1,0 +1,214 @@
+# path-test-map.yaml
+#
+# Machine-readable map from source paths to the test suites that cover them.
+# This is the "Phase 0" deliverable referenced in the AI Maintainer Assistant
+# proposal: it lets both humans and agents answer "what should I run for this
+# diff?" without re-deriving repo knowledge every time.
+#
+# Consumed by scripts/scope_tests.py (the Phase 2 diff-to-test-scope mapper).
+#
+# Rule fields:
+#   match           - list of path prefixes / glob fragments that trigger this rule
+#   unit            - go test package patterns to run
+#   conformance     - chainsaw suite directories to run (relative to
+#                     test/conformance/chainsaw/)
+#   cli             - kyverno CLI test directories to run (relative to test/cli/test/)
+#   codegen_check   - if true, diff requires `make codegen-all-code && make verify-codegen`
+#   risk            - low | medium | high
+#   requires_human_review - if true, an automation agent must never auto-merge
+#                           changes matching this rule regardless of CI result
+#   note            - human-readable rationale, shown in agent output
+
+rules:
+
+  # ---- Legacy engine: validate ----
+  - id: engine-validate
+    match: ["pkg/engine/validate", "pkg/engine/handlers/validation", "pkg/validation/resource"]
+    unit: ["./pkg/engine/validate/...", "./pkg/engine/handlers/validation/...", "./pkg/validation/..."]
+    conformance: ["validate/**", "policy-validation/**"]
+    cli: ["*"]   # validate-heavy CLI fixtures live at test/cli/test/ top level; see cli-general rule
+    risk: low
+
+  # ---- Legacy engine: mutate ----
+  - id: engine-mutate
+    match: ["pkg/engine/mutate", "pkg/engine/handlers/mutation", "pkg/policy/mutate"]
+    unit: ["./pkg/engine/mutate/...", "./pkg/engine/handlers/mutation/...", "./pkg/policy/mutate/..."]
+    conformance: ["mutate/**"]
+    risk: low
+
+  # ---- Legacy engine: generate / background ----
+  - id: engine-generate
+    match: ["pkg/background/generate", "pkg/policy/generate", "pkg/engine/api", "pkg/background/common"]
+    unit: ["./pkg/background/...", "./pkg/policy/generate/..."]
+    conformance: ["generate/**"]
+    risk: medium
+    note: "Generate has cross-resource side effects (clone/data, sync); prefer full generate/** suite over partial."
+
+  # ---- Engine core (context, jmespath, operators, policycontext) ----
+  - id: engine-core
+    match: ["pkg/engine/context", "pkg/engine/jmespath", "pkg/engine/operator", "pkg/engine/variables",
+            "pkg/engine/policycontext", "pkg/engine/api", "pkg/engine/adapters", "pkg/engine/factories"]
+    unit: ["./pkg/engine/..."]
+    conformance: ["validate/**", "mutate/**", "generate/**", "rangeoperators/**"]
+    risk: medium
+    note: "Shared engine primitives fan out across all legacy policy types — run the broad set, not a single suite."
+
+  # ---- Image verification (cosign/notary) — security sensitive ----
+  - id: image-verification
+    match: ["pkg/cosign", "pkg/notary", "pkg/image", "pkg/sigstoretuf"]
+    unit: ["./pkg/image/...", "./pkg/cosign/...", "./pkg/notary/...", "./pkg/sigstoretuf/..."]
+    conformance: ["verify-images/**", "verify-manifests/**", "custom-sigstore/**", "sigstore-custom-tuf/**"]
+    risk: high
+    requires_human_review: true
+    note: "Supply-chain verification path. Per CODEOWNERS this always needs a named reviewer; never auto-merge."
+
+  # ---- Webhooks / admission wiring ----
+  - id: webhooks
+    match: ["pkg/webhooks", "pkg/controllers/webhook"]
+    unit: ["./pkg/webhooks/...", "./pkg/controllers/webhook/..."]
+    conformance: ["webhooks/**", "webhook-configurations/**"]
+    risk: medium
+
+  # ---- Reports / background scanning ----
+  - id: reports
+    match: ["pkg/controllers/report", "pkg/openreports", "pkg/utils/report"]
+    unit: ["./pkg/controllers/report/...", "./pkg/openreports/..."]
+    conformance: ["reports/**", "reports-exclude-result/**", "openreports/**",
+                  "validating-admission-policy-reports/**", "mutating-admission-policy-reports*/**"]
+    risk: medium
+
+  # ---- Cleanup controller ----
+  - id: cleanup
+    match: ["pkg/controllers/cleanup", "cmd/cleanup-controller"]
+    unit: ["./pkg/controllers/cleanup/..."]
+    conformance: ["cleanup/**"]
+    risk: low
+
+  # ---- Deleting policies (dpol) ----
+  - id: deleting-policy
+    match: ["pkg/controllers/deleting", "pkg/cel/policies/dpol", "pkg/background/gpol"]
+    unit: ["./pkg/controllers/deleting/...", "./pkg/cel/policies/dpol/..."]
+    conformance: ["deleting-policies/**", "namespaced-deleting-policies/**"]
+    risk: medium
+
+  # ---- Global context ----
+  - id: globalcontext
+    match: ["pkg/globalcontext"]
+    unit: ["./pkg/globalcontext/..."]
+    conformance: ["globalcontext/**"]
+    risk: low
+
+  # ---- Exceptions ----
+  - id: exceptions
+    match: ["pkg/exceptions", "pkg/validation/exception"]
+    unit: ["./pkg/exceptions/...", "./pkg/validation/exception/..."]
+    conformance: ["exceptions/**", "policy-exceptions-disabled/**"]
+    risk: medium
+    note: "Exceptions are a security-relevant bypass mechanism — treat conformance failures as blocking, not advisory."
+
+  # ---- Autogen (Pod controller rule generation) ----
+  - id: autogen
+    match: ["pkg/autogen"]
+    unit: ["./pkg/autogen/..."]
+    conformance: ["autogen/**"]
+    risk: medium
+    note: "CODEOWNERS flags this as an always-review path even though blast radius here is contained."
+
+  # ---- CEL: validating policies (vpol) ----
+  - id: cel-vpol
+    match: ["pkg/cel/policies/vpol"]
+    unit: ["./pkg/cel/policies/vpol/..."]
+    conformance: ["validating-policies/**", "namespaced-validating-policies/**"]
+    risk: medium
+
+  # ---- CEL: mutating policies (mpol) ----
+  - id: cel-mpol
+    match: ["pkg/cel/policies/mpol"]
+    unit: ["./pkg/cel/policies/mpol/..."]
+    conformance: ["mutating-policies/**", "namespaced-mutating-policies/**"]
+    risk: medium
+
+  # ---- CEL: image validating policies (ivpol) ----
+  - id: cel-ivpol
+    match: ["pkg/cel/policies/ivpol"]
+    unit: ["./pkg/cel/policies/ivpol/..."]
+    conformance: ["image-validating-policies/**", "namespaced-image-validating-policies/**"]
+    risk: high
+    requires_human_review: true
+    note: "Image verification policy path — same sensitivity class as pkg/cosign / pkg/notary."
+
+  # ---- CEL: generating policies (gpol) ----
+  - id: cel-gpol
+    match: ["pkg/cel/policies/gpol"]
+    unit: ["./pkg/cel/policies/gpol/..."]
+    conformance: ["generating-policies/**", "namespaced-generating-policies/**"]
+    risk: medium
+
+  # ---- CEL shared (compiler, engine, matching, autogen, libs) ----
+  - id: cel-shared
+    match: ["pkg/cel/compiler", "pkg/cel/engine", "pkg/cel/matching", "pkg/cel/autogen", "pkg/cel/libs"]
+    unit: ["./pkg/cel/..."]
+    conformance: ["validating-policies/**", "mutating-policies/**", "image-validating-policies/**",
+                  "generating-policies/**", "deleting-policies/**"]
+    risk: high
+    note: "Shared CEL compiler/engine code fans out to every CEL-based policy type — run the full CEL matrix."
+
+  # ---- Admission policy generation (VAP/MAP autogen from CEL policies) ----
+  - id: admissionpolicy
+    match: ["pkg/admissionpolicy"]
+    unit: ["./pkg/admissionpolicy/..."]
+    conformance: ["generate-validating-admission-policy/**", "generate-mutating-admission-policy*/**",
+                  "validating-admission-policy-reports/**", "mutating-admission-policy-reports*/**"]
+    risk: medium
+
+  # ---- CLI ----
+  - id: cli
+    match: ["cmd/cli/kubectl-kyverno"]
+    unit: ["./cmd/cli/kubectl-kyverno/..."]
+    conformance: ["cli/**"]
+    cli: ["*"]
+    risk: low
+    note: "Also run `make test-cli` (test-cli-policies + test-cli-local) locally; not chainsaw-based."
+
+  # ---- API types (CRDs) — cross-cutting, codegen-sensitive ----
+  - id: api-types
+    match: ["api/kyverno", "api/reports", "api/policyreport"]
+    unit: ["./..."]
+    conformance: ["**"]
+    codegen_check: true
+    risk: high
+    requires_human_review: true
+    note: "Per CODEOWNERS, api/kyverno/v1 always needs a maintainer reviewer. Changing a type can silently affect every controller. Require full suite + codegen verify, never auto-merge."
+
+  # ---- Generated clients/listers/informers ----
+  - id: generated-clients
+    match: ["pkg/client", "pkg/clients"]
+    unit: []
+    conformance: []
+    codegen_check: true
+    risk: low
+    note: "Should only change as a result of `make codegen-all-code`. A hand-edited diff here is itself a red flag worth surfacing to a human."
+
+  # ---- Helm charts ----
+  - id: charts
+    match: ["charts/"]
+    unit: []
+    conformance: []
+    risk: medium
+    note: "Not covered by Go tests. Route to `helm lint` + `ct lint` + charts/*/ci/*.yaml value-file matrix instead."
+
+  # ---- Non-source paths that don't need their own test rule ----
+  - id: ignore-noise
+    match: ["test/conformance/chainsaw/", "docs/user/crd/", "go.mod", "go.sum", "config/crds/"]
+    unit: []
+    conformance: []
+    risk: low
+    note: "No independent test action required; covered by the source-side rule that touched the same feature, or out of scope for this mapper (dependency PRs are scoped by the separate Dependabot/semver auto-merge check)."
+
+  # ---- Fallback: any other pkg/<dir> not explicitly listed ----
+  - id: pkg-fallback
+    match: ["pkg/"]
+    unit: ["./pkg/<dir>/..."]     # <dir> substituted at match time
+    conformance: []
+    risk: medium
+    note: "No explicit conformance mapping exists for this package yet. Run its unit tests and flag for a maintainer to either add a rule here or confirm the full conformance suite should gate the merge."
