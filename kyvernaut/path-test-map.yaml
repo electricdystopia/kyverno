@@ -38,7 +38,7 @@ rules:
 
   # ---- Legacy engine: generate / background ----
   - id: engine-generate
-    match: ["pkg/background/generate", "pkg/policy/generate", "pkg/engine/api", "pkg/background/common"]
+    match: ["pkg/background/generate", "pkg/policy/generate", "pkg/background/common"]
     unit: ["./pkg/background/...", "./pkg/policy/generate/..."]
     conformance: ["generate/**"]
     risk: medium
@@ -74,7 +74,8 @@ rules:
     match: ["pkg/controllers/report", "pkg/openreports", "pkg/utils/report"]
     unit: ["./pkg/controllers/report/...", "./pkg/openreports/..."]
     conformance: ["reports/**", "reports-exclude-result/**", "openreports/**",
-                  "validating-admission-policy-reports/**", "mutating-admission-policy-reports*/**"]
+                  "validating-admission-policy-reports/**", "mutating-admission-policy-reports/**",
+                  "mutating-admission-policy-reports-alpha/**", "mutating-admission-policy-reports-v1/**"]
     risk: medium
 
   # ---- Cleanup controller ----
@@ -157,8 +158,11 @@ rules:
   - id: admissionpolicy
     match: ["pkg/admissionpolicy"]
     unit: ["./pkg/admissionpolicy/..."]
-    conformance: ["generate-validating-admission-policy/**", "generate-mutating-admission-policy*/**",
-                  "validating-admission-policy-reports/**", "mutating-admission-policy-reports*/**"]
+    conformance: ["generate-validating-admission-policy/**",
+                  "generate-mutating-admission-policy/**", "generate-mutating-admission-policy-alpha/**",
+                  "generate-mutating-admission-policy-v1/**",
+                  "validating-admission-policy-reports/**", "mutating-admission-policy-reports/**",
+                  "mutating-admission-policy-reports-alpha/**", "mutating-admission-policy-reports-v1/**"]
     risk: medium
 
   # ---- CLI ----
@@ -204,6 +208,83 @@ rules:
     conformance: []
     risk: low
     note: "No independent test action required; covered by the source-side rule that touched the same feature, or out of scope for this mapper (dependency PRs are scoped by the separate Dependabot/semver auto-merge check)."
+
+  # ---- Controller entrypoints (cmd/) — previously invisible even though
+  # their pkg/ counterparts were covered. Found via offline backtest against
+  # real commit history: cmd/kyverno, cmd/background-controller etc. had
+  # zero rule coverage despite being the actual binaries that ship.
+  - id: cmd-admission-controller
+    match: ["cmd/kyverno/", "cmd/internal"]
+    unit: ["./cmd/kyverno/...", "./cmd/internal/..."]
+    conformance: ["webhooks/**", "validate/**", "mutate/**", "generate/**"]
+    risk: medium
+    note: "Main admission controller binary wiring; broad blast radius by nature of being the entrypoint."
+
+  - id: cmd-background-controller
+    match: ["cmd/background-controller"]
+    unit: ["./cmd/background-controller/..."]
+    conformance: ["background-only/**", "generate/**", "generating-policies/**"]
+    risk: medium
+
+  - id: cmd-reports-controller
+    match: ["cmd/reports-controller"]
+    unit: ["./cmd/reports-controller/..."]
+    conformance: ["reports/**", "openreports/**"]
+    risk: medium
+
+  - id: cmd-readiness-kyverno-init
+    match: ["cmd/readiness-checker", "cmd/kyverno-init"]
+    unit: ["./cmd/readiness-checker/...", "./cmd/kyverno-init/..."]
+    conformance: []
+    risk: low
+    note: "Startup/health-check wiring; low direct policy-evaluation blast radius but flag for a smoke deploy."
+
+  # ---- Go integration test suite (test/integration/) — separate from
+  # chainsaw conformance; exercises dpol/gpol/ivpol/mpol/vpol end-to-end
+  # against a real client, keyed by Go package not CI job name.
+  - id: go-integration-tests
+    match: ["test/integration"]
+    unit: ["./test/integration/..."]
+    conformance: []
+    cli: []
+    risk: low
+    note: "Not chainsaw-based; run directly via `go test ./test/integration/...`. Changed fixtures here usually accompany a source change already covered by another rule."
+
+  # ---- CLI conformance fixtures (test/cli/) changed independently of
+  # cmd/cli/kubectl-kyverno source — e.g. a new sample policy/resource pair
+  # added without a source change. Still worth re-running the CLI suite.
+  - id: cli-fixtures
+    match: ["test/cli"]
+    unit: []
+    conformance: ["cli/**"]
+    cli: ["*"]
+    risk: low
+
+  # ---- Codegen tooling itself ----
+  - id: codegen-tooling
+    match: ["hack/controller-gen", "hack/api-group-resources", "hack/client-wrapper", "config/install"]
+    unit: []
+    conformance: []
+    codegen_check: true
+    risk: medium
+    note: "Changing the generator itself should re-run codegen verify across the whole repo, not just a subset."
+
+  # ---- CI workflow definitions ----
+  - id: ci-workflows
+    match: [".github/workflows", ".github/actions"]
+    unit: []
+    conformance: []
+    risk: medium
+    requires_human_review: true
+    note: "A broken workflow change can silently disable the safety net (CI stops actually gating merges) without any test failing. Always human-reviewed, never auto-merged, regardless of how trivial the YAML diff looks."
+
+  # ---- Non-source docs / perf artifacts that need no test action ----
+  - id: docs-and-perf-no-action
+    match: ["docs/perf-testing", "docs/user", "docs/dev", "README.md", "scripts/labs"]
+    unit: []
+    conformance: []
+    risk: low
+    note: "Content-only; no code path exercises these. (Whether a code change *requires* a doc update is a separate, not-yet-built classifier — see 'doc-change PR drafting' in the deferred features.)"
 
   # ---- Fallback: any other pkg/<dir> not explicitly listed ----
   - id: pkg-fallback

@@ -64,3 +64,12 @@ def test_unmatched_file_blocks_auto_merge():
     plan = scope(["totally/new/top-level/dir/file.go"], RULES)
     assert plan["unmatched_files"]
     assert plan["auto_merge_eligible"] is False
+
+
+def test_engine_api_resolves_without_ambiguity():
+    # Regression: pkg/engine/api was previously listed under both
+    # engine-generate and engine-core, causing an AmbiguousMatch at runtime.
+    # Found via the offline backtest against real commit history, not by
+    # hand-inspection -- exactly the kind of gap this backtest is for.
+    plan = scope(["pkg/engine/api/client.go"], RULES)
+    assert plan["ambiguous_matches"] == []

@@ -1,0 +1,2990 @@
+{
+  "summary": {
+    "sample_size_prs": 200,
+    "total_ci_job_failures_observed": 0,
+    "total_missed_by_scoped_plan": 0,
+    "prs_where_scope_would_have_missed_a_real_failure": 0,
+    "miss_rate_pct": null,
+    "note": "miss_rate_pct is the number that should gate whether scoped CI ever becomes a real gate, not just a comment."
+  },
+  "rows": [
+    {
+      "pr_number": 16802,
+      "title": "chore(deps): bump github.com/aptible/supercronic from 0.2.47 to 0.2.48",
+      "n_files": 2,
+      "predicted_suites": [],
+      "auto_merge_eligible": true,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16800,
+      "title": "Fix image verification parity gaps",
+      "n_files": 14,
+      "predicted_suites": [
+        "**",
+        "custom-sigstore",
+        "generate",
+        "mutate",
+        "mutating-admission-policy-reports",
+        "mutating-admission-policy-reports-alpha",
+        "mutating-admission-policy-reports-v1",
+        "openreports",
+        "policy-validation",
+        "rangeoperators",
+        "reports",
+        "reports-exclude-result",
+        "sigstore-custom-tuf",
+        "validate",
+        "validating-admission-policy-reports",
+        "verify-images",
+        "verify-manifests"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16804,
+      "title": "fix(helm): disable in-process cert controller when cert-manager delegation is en",
+      "n_files": 4,
+      "predicted_suites": [
+        "cleanup",
+        "generate",
+        "mutate",
+        "validate",
+        "webhooks"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "codecov",
+        "codecov"
+      ]
+    },
+    {
+      "pr_number": 15873,
+      "title": "Moving the mixed-OS (Hybrid) cluster solution  from controller specific nodeSele",
+      "n_files": 2,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16558,
+      "title": "fix(engine): honor per-rule failureAction in the admission block deci\u2026",
+      "n_files": 4,
+      "predicted_suites": [
+        "generate",
+        "mutate",
+        "rangeoperators",
+        "validate",
+        "webhook-configurations",
+        "webhooks"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16249,
+      "title": "fix: allow pod-level seccomp in restrict-seccomp-strict vpol",
+      "n_files": 1,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16060,
+      "title": "fix: honor full-exemption PolicyException when multiple exceptions match",
+      "n_files": 6,
+      "predicted_suites": [
+        "generating-policies",
+        "mutating-policies",
+        "namespaced-generating-policies",
+        "namespaced-mutating-policies",
+        "namespaced-validating-policies",
+        "validating-policies"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16787,
+      "title": "feat(cli): support admission operation simulation for policy testing",
+      "n_files": 19,
+      "predicted_suites": [
+        "cli"
+      ],
+      "auto_merge_eligible": true,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16618,
+      "title": "fix(cli): evaluate mutateExisting mutating policies on admission in test",
+      "n_files": 7,
+      "predicted_suites": [
+        "cli",
+        "mutating-admission-policy-reports",
+        "mutating-admission-policy-reports-alpha",
+        "mutating-admission-policy-reports-v1",
+        "mutating-policies",
+        "namespaced-mutating-policies",
+        "openreports",
+        "reports",
+        "reports-exclude-result",
+        "validating-admission-policy-reports"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16784,
+      "title": "fix: resolve namespaceObject with live API fallback on informer cache miss",
+      "n_files": 5,
+      "predicted_suites": [
+        "background-only",
+        "cleanup",
+        "deleting-policies",
+        "generate",
+        "generating-policies",
+        "image-validating-policies",
+        "mutate",
+        "mutating-policies",
+        "validate",
+        "validating-policies",
+        "webhooks"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16734,
+      "title": "chore(deps): bump ossf/scorecard-action from 2.4.3 to 2.4.4",
+      "n_files": 1,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16733,
+      "title": "chore(deps): bump actions/checkout from 6.0.2 to 7.0.1",
+      "n_files": 1,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16735,
+      "title": "chore(deps): bump fluxcd/flux2/action from 2.9.2 to 2.9.3",
+      "n_files": 1,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16776,
+      "title": "restrict issue self-assignment to good first issues for non-members",
+      "n_files": 1,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16767,
+      "title": "chore(deps): bump docker/login-action from 4.1.0 to 4.5.1",
+      "n_files": 1,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16738,
+      "title": "chore(deps): bump github.com/sigstore/cosign/v3 from 3.0.6 to 3.1.2",
+      "n_files": 2,
+      "predicted_suites": [],
+      "auto_merge_eligible": true,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16737,
+      "title": "chore(deps): bump the kubernetes group across 3 directories with 7 updates",
+      "n_files": 6,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16770,
+      "title": "chore(deps): bump github.com/prometheus/client_golang from 1.23.2 to 1.24.1",
+      "n_files": 2,
+      "predicted_suites": [],
+      "auto_merge_eligible": true,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16749,
+      "title": "feat(helm): expose maxGlobalContextEntries in the Kyverno chart",
+      "n_files": 4,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16741,
+      "title": "test(integration): align ivpol framework tests with single-phase image verificat",
+      "n_files": 2,
+      "predicted_suites": [],
+      "auto_merge_eligible": true,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16751,
+      "title": "fix(helm): use request.namespace for vpolExclude matchConditions",
+      "n_files": 1,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16739,
+      "title": "fix: prevent GlobalContextEntry informer failure from deadlocking the reconcile ",
+      "n_files": 2,
+      "predicted_suites": [
+        "globalcontext"
+      ],
+      "auto_merge_eligible": true,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "Framework tests"
+      ]
+    },
+    {
+      "pr_number": 16434,
+      "title": "fix(webhook): don't mark policies not ready or clear webhooks while health is un",
+      "n_files": 2,
+      "predicted_suites": [
+        "webhook-configurations",
+        "webhooks"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "Framework tests"
+      ]
+    },
+    {
+      "pr_number": 16397,
+      "title": "fix(webhook): add excludeBootstrapResources flag to skip Node and CSR on Fail we",
+      "n_files": 9,
+      "predicted_suites": [
+        "generate",
+        "mutate",
+        "validate",
+        "webhook-configurations",
+        "webhooks"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "Framework tests"
+      ]
+    },
+    {
+      "pr_number": 16560,
+      "title": "[Feature] add optional cache bounds via --maxGlobalContextEntries",
+      "n_files": 11,
+      "predicted_suites": [
+        "background-only",
+        "cleanup",
+        "cli",
+        "generate",
+        "generating-policies",
+        "globalcontext",
+        "mutate",
+        "openreports",
+        "reports",
+        "validate",
+        "webhooks"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "Framework tests"
+      ]
+    },
+    {
+      "pr_number": 16728,
+      "title": "fix: validate DeletingPolicy cron schedule at admission",
+      "n_files": 2,
+      "predicted_suites": [
+        "deleting-policies",
+        "namespaced-deleting-policies"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16359,
+      "title": "fix: align policy metrics for new policy formats",
+      "n_files": 14,
+      "predicted_suites": [
+        "generating-policies",
+        "image-validating-policies",
+        "mutating-policies",
+        "namespaced-generating-policies",
+        "namespaced-image-validating-policies",
+        "namespaced-mutating-policies",
+        "namespaced-validating-policies",
+        "validating-policies"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "codecov",
+        "Framework tests"
+      ]
+    },
+    {
+      "pr_number": 16476,
+      "title": "fix: preserve namespaceSelector during policy autogen",
+      "n_files": 14,
+      "predicted_suites": [
+        "deleting-policies",
+        "generating-policies",
+        "image-validating-policies",
+        "mutating-policies",
+        "namespaced-image-validating-policies",
+        "namespaced-mutating-policies",
+        "namespaced-validating-policies",
+        "validating-policies"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16721,
+      "title": "feat(mpol): add auditAnnotations support to MutatingPolicy",
+      "n_files": 25,
+      "predicted_suites": [
+        "cli",
+        "mutating-policies",
+        "namespaced-mutating-policies"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16730,
+      "title": "test(integration): add ImageValidatingPolicy support to the framework",
+      "n_files": 7,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "codecov",
+        "codecov"
+      ]
+    },
+    {
+      "pr_number": 16731,
+      "title": "fix(ivpol): keep autogen variants per-policy to prevent cross-policy  clobbering",
+      "n_files": 2,
+      "predicted_suites": [
+        "image-validating-policies",
+        "namespaced-image-validating-policies"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16591,
+      "title": "fix(verification): use sigstore-go TUF client and fallback to trusted_root.json",
+      "n_files": 4,
+      "predicted_suites": [
+        "custom-sigstore",
+        "sigstore-custom-tuf",
+        "verify-images",
+        "verify-manifests"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16663,
+      "title": "fix(ivpol): harden validation, cover ephemeral subresource, and serialize sigsto",
+      "n_files": 27,
+      "predicted_suites": [
+        "cli",
+        "custom-sigstore",
+        "deleting-policies",
+        "generate",
+        "generating-policies",
+        "image-validating-policies",
+        "mutate",
+        "mutating-admission-policy-reports",
+        "mutating-admission-policy-reports-alpha",
+        "mutating-admission-policy-reports-v1",
+        "mutating-policies",
+        "namespaced-image-validating-policies",
+        "openreports",
+        "reports",
+        "reports-exclude-result",
+        "sigstore-custom-tuf",
+        "validate",
+        "validating-admission-policy-reports",
+        "validating-policies",
+        "verify-images",
+        "verify-manifests",
+        "webhook-configurations",
+        "webhooks"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16727,
+      "title": "fix: align dpol CLI reporting for constraint-excluded resources with vpol/mpol",
+      "n_files": 5,
+      "predicted_suites": [
+        "cli",
+        "deleting-policies",
+        "namespaced-deleting-policies"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16438,
+      "title": "feat(cel): add regex.replace extension function",
+      "n_files": 10,
+      "predicted_suites": [
+        "cli",
+        "deleting-policies",
+        "generating-policies",
+        "image-validating-policies",
+        "mutating-policies",
+        "validating-policies"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16431,
+      "title": "Fix DeletingPolicy objectSelector test results",
+      "n_files": 8,
+      "predicted_suites": [
+        "cli",
+        "deleting-policies",
+        "namespaced-deleting-policies"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16716,
+      "title": "fix: strip cross-namespace ownerReferences in CEL-based generation",
+      "n_files": 2,
+      "predicted_suites": [
+        "deleting-policies",
+        "generating-policies",
+        "image-validating-policies",
+        "mutating-policies",
+        "validating-policies"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16703,
+      "title": "feat: support MutatingAdmissionPolicy v1 on Kubernetes 1.36",
+      "n_files": 131,
+      "predicted_suites": [
+        "cli",
+        "generate",
+        "generate-mutating-admission-policy",
+        "generate-mutating-admission-policy-alpha",
+        "generate-mutating-admission-policy-v1",
+        "generate-validating-admission-policy",
+        "mutate",
+        "mutating-admission-policy-reports",
+        "mutating-admission-policy-reports-alpha",
+        "mutating-admission-policy-reports-v1",
+        "openreports",
+        "policy-validation",
+        "reports",
+        "reports-exclude-result",
+        "validate",
+        "validating-admission-policy-reports",
+        "webhooks"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16699,
+      "title": "feat: add YAML template mode for GeneratingPolicy with optional CEL interpolatio",
+      "n_files": 49,
+      "predicted_suites": [
+        "cli",
+        "deleting-policies",
+        "generating-policies",
+        "image-validating-policies",
+        "mutating-policies",
+        "namespaced-generating-policies",
+        "validating-policies"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16666,
+      "title": "fix(ivpol): support private Sigstore/Fulcio instances for keyless verification",
+      "n_files": 8,
+      "predicted_suites": [
+        "custom-sigstore",
+        "sigstore-custom-tuf",
+        "verify-images",
+        "verify-manifests"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16439,
+      "title": "Image verification credential handling refactor",
+      "n_files": 97,
+      "predicted_suites": [
+        "**",
+        "background-only",
+        "cleanup",
+        "cli",
+        "custom-sigstore",
+        "deleting-policies",
+        "generate",
+        "generating-policies",
+        "image-validating-policies",
+        "mutate",
+        "mutating-admission-policy-reports",
+        "mutating-admission-policy-reports-alpha",
+        "mutating-admission-policy-reports-v1",
+        "mutating-policies",
+        "namespaced-deleting-policies",
+        "namespaced-generating-policies",
+        "namespaced-image-validating-policies",
+        "namespaced-mutating-policies",
+        "namespaced-validating-policies",
+        "openreports",
+        "rangeoperators",
+        "reports",
+        "reports-exclude-result",
+        "sigstore-custom-tuf",
+        "validate",
+        "validating-admission-policy-reports",
+        "validating-policies",
+        "verify-images",
+        "verify-manifests",
+        "webhook-configurations",
+        "webhooks"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16603,
+      "title": "fix(generate): reject stale trigger UIDs when live resource does not match",
+      "n_files": 11,
+      "predicted_suites": [
+        "generate"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16594,
+      "title": "fix(policycache): surface audit-rule warnings for mixed audit and enforce polici",
+      "n_files": 4,
+      "predicted_suites": [
+        "webhook-configurations",
+        "webhooks"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16698,
+      "title": "fix: validate MAP-incompatible MutatingPolicy match conditions",
+      "n_files": 6,
+      "predicted_suites": [
+        "cli",
+        "mutating-policies",
+        "namespaced-mutating-policies"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16697,
+      "title": "chore(deps): bump github/codeql-action/upload-sarif from 4.37.1 to 4.37.3",
+      "n_files": 3,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16680,
+      "title": "chore(deps): bump actions/checkout from 6.0.2 to 7.0.1",
+      "n_files": 34,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16679,
+      "title": "chore(deps): bump actions/labeler from 6.2.0 to 7.0.0",
+      "n_files": 1,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16661,
+      "title": "ci: assign release milestone to PRs automatically at release time",
+      "n_files": 2,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16686,
+      "title": "fix: enforce MutatingPolicy evaluation mode semantics",
+      "n_files": 29,
+      "predicted_suites": [
+        "mutating-policies",
+        "namespaced-mutating-policies",
+        "webhook-configurations",
+        "webhooks"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16694,
+      "title": "feat: reuse image verification cache for ImageValidatingPolicy",
+      "n_files": 12,
+      "predicted_suites": [
+        "cli",
+        "custom-sigstore",
+        "deleting-policies",
+        "generate",
+        "generating-policies",
+        "image-validating-policies",
+        "mutate",
+        "mutating-admission-policy-reports",
+        "mutating-admission-policy-reports-alpha",
+        "mutating-admission-policy-reports-v1",
+        "mutating-policies",
+        "namespaced-image-validating-policies",
+        "openreports",
+        "reports",
+        "reports-exclude-result",
+        "sigstore-custom-tuf",
+        "validate",
+        "validating-admission-policy-reports",
+        "validating-policies",
+        "verify-images",
+        "verify-manifests",
+        "webhooks"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16695,
+      "title": "test: point ivpol cosign tests at the kyverno test-images registry",
+      "n_files": 2,
+      "predicted_suites": [
+        "custom-sigstore",
+        "sigstore-custom-tuf",
+        "verify-images",
+        "verify-manifests"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "Check milestone",
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 16305,
+      "title": "fix(ivpol): add debug logging for CEL image verification functions",
+      "n_files": 4,
+      "predicted_suites": [
+        "custom-sigstore",
+        "deleting-policies",
+        "generating-policies",
+        "image-validating-policies",
+        "mutating-policies",
+        "sigstore-custom-tuf",
+        "validating-policies",
+        "verify-images",
+        "verify-manifests"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16668,
+      "title": "chore(deps): bump actions/setup-python from 6.2.0 to 7.0.0",
+      "n_files": 2,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16689,
+      "title": "fix: make file extension checks case-insensitive",
+      "n_files": 2,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 16687,
+      "title": "chore: bump controller-tools",
+      "n_files": 3,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16681,
+      "title": "chore(deps): bump Homebrew/actions/limit-pull-requests from 2026.07.13.1 to 2026",
+      "n_files": 1,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16684,
+      "title": "chore(deps): bump sigs.k8s.io/structured-merge-diff/v6 from 6.3.2 to 6.4.2",
+      "n_files": 2,
+      "predicted_suites": [],
+      "auto_merge_eligible": true,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16615,
+      "title": "fix(webhook): scope namespaced policies to their own namespace",
+      "n_files": 8,
+      "predicted_suites": [
+        "generate",
+        "image-validating-policies",
+        "mutate",
+        "namespaced-image-validating-policies",
+        "validate",
+        "webhook-configurations",
+        "webhooks"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16614,
+      "title": "feat: support MutatingPolicy target conditions and subresource targets",
+      "n_files": 23,
+      "predicted_suites": [
+        "cli",
+        "mutating-policies",
+        "namespaced-mutating-policies"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16675,
+      "title": "cleanup: remove dead fakeContext code",
+      "n_files": 1,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16643,
+      "title": "refactor: add context propagation to background util functions",
+      "n_files": 5,
+      "predicted_suites": [
+        "generate",
+        "webhook-configurations",
+        "webhooks"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "codecov"
+      ]
+    },
+    {
+      "pr_number": 16670,
+      "title": "chore(deps): bump github.com/onsi/gomega from 1.40.0 to 1.42.1",
+      "n_files": 2,
+      "predicted_suites": [],
+      "auto_merge_eligible": true,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16669,
+      "title": "chore(deps): bump google.golang.org/grpc from 1.82.0 to 1.82.1",
+      "n_files": 2,
+      "predicted_suites": [],
+      "auto_merge_eligible": true,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16509,
+      "title": "fix(mpol): allow ApplyConfiguration to mutate atomic lists and structs",
+      "n_files": 13,
+      "predicted_suites": [
+        "cli",
+        "mutating-policies",
+        "namespaced-mutating-policies"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16620,
+      "title": "chore(deps): bump github.com/cyphar/filepath-securejoin from 0.6.1 to 0.7.0",
+      "n_files": 2,
+      "predicted_suites": [],
+      "auto_merge_eligible": true,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16662,
+      "title": "ci: migrate pr-branch-updater to GitHub App auth",
+      "n_files": 1,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 16619,
+      "title": "chore(deps): bump github/codeql-action/upload-sarif from 4.37.0 to 4.37.1",
+      "n_files": 3,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16621,
+      "title": "chore(deps): bump github.com/dgraph-io/ristretto/v2 from 2.4.0 to 2.4.2",
+      "n_files": 2,
+      "predicted_suites": [],
+      "auto_merge_eligible": true,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "codecov"
+      ]
+    },
+    {
+      "pr_number": 16628,
+      "title": "fix: CustomNamespaceLister.List honors the label selector",
+      "n_files": 2,
+      "predicted_suites": [
+        "generate-mutating-admission-policy",
+        "generate-mutating-admission-policy-alpha",
+        "generate-mutating-admission-policy-v1",
+        "generate-validating-admission-policy",
+        "mutating-admission-policy-reports",
+        "mutating-admission-policy-reports-alpha",
+        "mutating-admission-policy-reports-v1",
+        "validating-admission-policy-reports"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 16632,
+      "title": "fix: resolve error shadowing in SplitDocuments signature",
+      "n_files": 1,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16625,
+      "title": "fix: add subtests and fix typo in ext/wildcard/match_test.go",
+      "n_files": 1,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 16630,
+      "title": "fix(perf-testing): eliminate data race on shared err variable in pod creation go",
+      "n_files": 1,
+      "predicted_suites": [],
+      "auto_merge_eligible": true,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 16611,
+      "title": "fix(webhook): serve NamespacedImageValidatingPolicy admission at right paths",
+      "n_files": 2,
+      "predicted_suites": [
+        "webhook-configurations",
+        "webhooks"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16610,
+      "title": "fix(mpol): handle DELETE target expression using oldObject",
+      "n_files": 8,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16588,
+      "title": "fix: suppress PolicyReport skip entries for ValidatingPolicy matchConditions non",
+      "n_files": 5,
+      "predicted_suites": [
+        "generate",
+        "mutate",
+        "mutating-admission-policy-reports",
+        "mutating-admission-policy-reports-alpha",
+        "mutating-admission-policy-reports-v1",
+        "namespaced-validating-policies",
+        "openreports",
+        "rangeoperators",
+        "reports",
+        "reports-exclude-result",
+        "validate",
+        "validating-admission-policy-reports",
+        "validating-policies"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16600,
+      "title": "chore(deps): bump github.com/sigstore/sigstore-go from 1.1.4 to 1.2.2",
+      "n_files": 2,
+      "predicted_suites": [],
+      "auto_merge_eligible": true,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16599,
+      "title": "chore(deps): bump github.com/aptible/supercronic from 0.2.45 to 0.2.47",
+      "n_files": 2,
+      "predicted_suites": [],
+      "auto_merge_eligible": true,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16292,
+      "title": "fix: handle whitespace in mpol autogen Object constructor",
+      "n_files": 2,
+      "predicted_suites": [
+        "mutating-policies",
+        "namespaced-mutating-policies"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16598,
+      "title": "chore(deps): bump github/codeql-action/upload-sarif from 4.36.3 to 4.37.0",
+      "n_files": 1,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16592,
+      "title": "fix(admissionpolicy): default userInfo groups and uid during background scans",
+      "n_files": 2,
+      "predicted_suites": [
+        "generate-mutating-admission-policy",
+        "generate-mutating-admission-policy-alpha",
+        "generate-mutating-admission-policy-v1",
+        "generate-validating-admission-policy",
+        "mutating-admission-policy-reports",
+        "mutating-admission-policy-reports-alpha",
+        "mutating-admission-policy-reports-v1",
+        "validating-admission-policy-reports"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 16471,
+      "title": "Fix: require --resource for migrate command",
+      "n_files": 2,
+      "predicted_suites": [
+        "cli"
+      ],
+      "auto_merge_eligible": true,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 16450,
+      "title": "fix: key generate test clone sources by policy",
+      "n_files": 10,
+      "predicted_suites": [
+        "cli"
+      ],
+      "auto_merge_eligible": true,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "codecov",
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 16561,
+      "title": "fix(admissionpolicy): set a background user so CEL request.userInfo.username is ",
+      "n_files": 4,
+      "predicted_suites": [
+        "generate-mutating-admission-policy",
+        "generate-mutating-admission-policy-alpha",
+        "generate-mutating-admission-policy-v1",
+        "generate-validating-admission-policy",
+        "mutating-admission-policy-reports",
+        "mutating-admission-policy-reports-alpha",
+        "mutating-admission-policy-reports-v1",
+        "validating-admission-policy-reports"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16576,
+      "title": "chore(deps): bump golang.org/x/crypto from 0.53.0 to 0.54.0",
+      "n_files": 2,
+      "predicted_suites": [],
+      "auto_merge_eligible": true,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16063,
+      "title": "fix(helm): handle null image tags in _image.tpl and fix reports-server defaultTa",
+      "n_files": 2,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16464,
+      "title": "ci: add Semgrep SAST workflow",
+      "n_files": 2,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16244,
+      "title": "test(integration): single-pass report aggregation helper + flagship test",
+      "n_files": 4,
+      "predicted_suites": [
+        "mutating-admission-policy-reports",
+        "mutating-admission-policy-reports-alpha",
+        "mutating-admission-policy-reports-v1",
+        "openreports",
+        "reports",
+        "reports-exclude-result",
+        "validating-admission-policy-reports"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 15564,
+      "title": "fix: add missing reportProperties to v2beta1 Rule",
+      "n_files": 11,
+      "predicted_suites": [
+        "**",
+        "cli"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16578,
+      "title": "fix: avoid mutating policy webhook name collisions",
+      "n_files": 3,
+      "predicted_suites": [
+        "webhook-configurations",
+        "webhooks"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16574,
+      "title": "chore(deps): bump cbrgm/cleanup-stale-branches-action from 1.2.9 to 1.2.11",
+      "n_files": 1,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16165,
+      "title": "fix(chart): wire cleanup controller core extra resources",
+      "n_files": 3,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 16575,
+      "title": "chore(deps): bump github.com/google/cel-go from 0.28.0 to 0.29.2",
+      "n_files": 2,
+      "predicted_suites": [],
+      "auto_merge_eligible": true,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16573,
+      "title": "chore(deps): bump fluxcd/flux2/action from 2.8.6 to 2.9.2",
+      "n_files": 1,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 16525,
+      "title": "fix: resolve wildcard apiVersions GVR to GVK mapping failure in getGpolTriggers",
+      "n_files": 2,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16572,
+      "title": "Test(conformance): pin Sigstore scaffolding version and remove redundant UR clea",
+      "n_files": 2,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 16562,
+      "title": "chore(deps): bump Homebrew/actions/limit-pull-requests from 9ceb7934560eb61d131d",
+      "n_files": 1,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16539,
+      "title": "chore(deps): bump the otel group across 1 directory with 4 updates",
+      "n_files": 2,
+      "predicted_suites": [],
+      "auto_merge_eligible": true,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 16010,
+      "title": "chore(deps): bump cbrgm/cleanup-stale-branches-action from 1.2.8 to 1.2.9",
+      "n_files": 1,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 16544,
+      "title": "fix(readiness-checker): guard nil EndpointConditions.Ready to prevent panic",
+      "n_files": 2,
+      "predicted_suites": [],
+      "auto_merge_eligible": true,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16490,
+      "title": "fix: skip reports RBAC check when background scanning is disabled",
+      "n_files": 2,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 16515,
+      "title": "chore(deps): bump actions/labeler from 6.0.1 to 6.2.0",
+      "n_files": 1,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16511,
+      "title": "Migrate yaml package gopkg.in/yaml.v2 to go.yaml.in/yaml/v3",
+      "n_files": 6,
+      "predicted_suites": [
+        "cli",
+        "mutate",
+        "webhook-configurations",
+        "webhooks"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16516,
+      "title": "chore(deps): bump github/codeql-action/upload-sarif from 4.36.3 to 4.37.0",
+      "n_files": 2,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 16528,
+      "title": "fix: address open CodeQL security vulnerabilities",
+      "n_files": 77,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "codecov",
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 16239,
+      "title": "fix: add policies.kyverno.io resources to aggregate policy roles",
+      "n_files": 6,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16505,
+      "title": "feat(gpol): add auditAnnotations support to GeneratingPolicy",
+      "n_files": 19,
+      "predicted_suites": [
+        "cli",
+        "generating-policies",
+        "namespaced-generating-policies"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16340,
+      "title": "fix(deps): bump golang.org/x/crypto to v0.53.0 and x/net to v0.56.0 to resolve s",
+      "n_files": 2,
+      "predicted_suites": [],
+      "auto_merge_eligible": true,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 16255,
+      "title": "fix(background-controller): wire MutatingPolicy and NamespacedMutatingPolicy int",
+      "n_files": 27,
+      "predicted_suites": [
+        "background-only",
+        "generate",
+        "generating-policies",
+        "mutating-policies",
+        "namespaced-mutating-policies"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "Framework tests"
+      ]
+    },
+    {
+      "pr_number": 16087,
+      "title": "fix: resolve context leak in dynamic resource watcher",
+      "n_files": 1,
+      "predicted_suites": [
+        "mutating-admission-policy-reports",
+        "mutating-admission-policy-reports-alpha",
+        "mutating-admission-policy-reports-v1",
+        "openreports",
+        "reports",
+        "reports-exclude-result",
+        "validating-admission-policy-reports"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "codecov"
+      ]
+    },
+    {
+      "pr_number": 16441,
+      "title": "chore(deps): bump fossas/fossa-action from 1.9.0 to 2.0.0",
+      "n_files": 1,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16442,
+      "title": "chore(deps): bump github/codeql-action/upload-sarif from 4.35.4 to 4.36.3",
+      "n_files": 2,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 16287,
+      "title": "fix(cli): surface GeneratingPolicy CEL errors when metadata.uid is missing",
+      "n_files": 13,
+      "predicted_suites": [
+        "cli"
+      ],
+      "auto_merge_eligible": true,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 15532,
+      "title": "fix: respect policy namespace in webhook name generation",
+      "n_files": 1,
+      "predicted_suites": [
+        "webhook-configurations",
+        "webhooks"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 15678,
+      "title": "add test case to verify fine grained exceptions for mpol",
+      "n_files": 7,
+      "predicted_suites": [],
+      "auto_merge_eligible": true,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 16298,
+      "title": "fix: ImageValidatingPolicy fails in air-gapped environments with insecureIgnoreT",
+      "n_files": 3,
+      "predicted_suites": [
+        "custom-sigstore",
+        "sigstore-custom-tuf",
+        "verify-images",
+        "verify-manifests"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16452,
+      "title": "fix(reports): correct label prefix for mpol/dpol policies",
+      "n_files": 3,
+      "predicted_suites": [
+        "mutating-admission-policy-reports",
+        "mutating-admission-policy-reports-alpha",
+        "mutating-admission-policy-reports-v1",
+        "openreports",
+        "reports",
+        "reports-exclude-result",
+        "validating-admission-policy-reports"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 16432,
+      "title": "fix(ci): force conflicts when server-side applying conformance CRDs",
+      "n_files": 1,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 15865,
+      "title": "fix(webhook): sort fine-grained policies to prevent continuous shuffle to the We",
+      "n_files": 2,
+      "predicted_suites": [
+        "webhook-configurations",
+        "webhooks"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16252,
+      "title": "fix: add sorting for ivpol targets",
+      "n_files": 1,
+      "predicted_suites": [
+        "image-validating-policies",
+        "namespaced-image-validating-policies"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16429,
+      "title": "fix(ci): use server-side apply for conformance CRD refresh",
+      "n_files": 1,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16258,
+      "title": "fix: prevent ivpol webhook reconciliation loop on platforms that normalize names",
+      "n_files": 4,
+      "predicted_suites": [
+        "webhook-configurations",
+        "webhooks"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 16167,
+      "title": "fix(helm): reportsServer.enabled=true fails with \"Image tags must be strings\"",
+      "n_files": 2,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16296,
+      "title": "fix(api): use allPath instead of anyPath in m.All validation loop",
+      "n_files": 1,
+      "predicted_suites": [
+        "**"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 16403,
+      "title": "feat(gpol): support useServerSideApply for GeneratingPolicy",
+      "n_files": 11,
+      "predicted_suites": [
+        "deleting-policies",
+        "generating-policies",
+        "image-validating-policies",
+        "mutating-policies",
+        "namespaced-generating-policies",
+        "validating-policies"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16426,
+      "title": "fix(deps): patch ORAS and sigstore CodeQL vulnerabilities",
+      "n_files": 2,
+      "predicted_suites": [],
+      "auto_merge_eligible": true,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 16229,
+      "title": "test(integration): add YAML fixture loaders for the framework",
+      "n_files": 5,
+      "predicted_suites": [],
+      "auto_merge_eligible": true,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16362,
+      "title": "fix: preserve cluster-scoped generated resources",
+      "n_files": 7,
+      "predicted_suites": [
+        "cli"
+      ],
+      "auto_merge_eligible": true,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16420,
+      "title": "chore(deps): bump golang.org/x/net from 0.48.0 to 0.55.0 in /hack/controller-gen",
+      "n_files": 2,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 15991,
+      "title": "chore(deps): bump github.com/onsi/gomega from 1.39.1 to 1.40.0",
+      "n_files": 2,
+      "predicted_suites": [],
+      "auto_merge_eligible": true,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16414,
+      "title": "test(chainsaw): fix clone-multiple-targets dynamic lookup fixture",
+      "n_files": 10,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 15939,
+      "title": "chore(deps): bump fluxcd/flux2 from 2.8.5 to 2.8.6",
+      "n_files": 1,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16415,
+      "title": "Don't initialize rekor client for key or certificate based scenarios",
+      "n_files": 2,
+      "predicted_suites": [
+        "custom-sigstore",
+        "sigstore-custom-tuf",
+        "verify-images",
+        "verify-manifests"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16405,
+      "title": "Update backoff v7",
+      "n_files": 3,
+      "predicted_suites": [
+        "webhook-configurations",
+        "webhooks"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "codecov"
+      ]
+    },
+    {
+      "pr_number": 16402,
+      "title": "chore(deps): bump goreleaser/goreleaser-action from 7.2.1 to 7.2.3",
+      "n_files": 1,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16379,
+      "title": "chore: update pond dependency to v2",
+      "n_files": 4,
+      "predicted_suites": [
+        "webhook-configurations",
+        "webhooks"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "codecov",
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 16399,
+      "title": "test(chainsaw): fix NIVP background + clone-multiple-targets setup",
+      "n_files": 10,
+      "predicted_suites": [
+        "deleting-policies",
+        "generating-policies",
+        "image-validating-policies",
+        "mutating-policies",
+        "namespaced-generating-policies",
+        "validating-policies"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 16369,
+      "title": "feat: support skipBackgroundRequests for CEL mpol/gpol",
+      "n_files": 34,
+      "predicted_suites": [
+        "cli",
+        "generate",
+        "mutate",
+        "mutating-policies",
+        "namespaced-mutating-policies",
+        "validate",
+        "webhook-configurations",
+        "webhooks"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16164,
+      "title": "test: fix webhook registration typo",
+      "n_files": 4,
+      "predicted_suites": [],
+      "auto_merge_eligible": true,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16394,
+      "title": "fix(deps): bump rekor and in-toto-golang for codeql alerts",
+      "n_files": 2,
+      "predicted_suites": [],
+      "auto_merge_eligible": true,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16162,
+      "title": "docs: fix README workflow badge and AI policy link",
+      "n_files": 1,
+      "predicted_suites": [],
+      "auto_merge_eligible": true,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16339,
+      "title": "fix(gpol): support mixed-type aggregate literals in CEL variables",
+      "n_files": 4,
+      "predicted_suites": [
+        "deleting-policies",
+        "generating-policies",
+        "image-validating-policies",
+        "mutating-policies",
+        "namespaced-generating-policies",
+        "validating-policies"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16039,
+      "title": "fix CEL autogen namespace replacement",
+      "n_files": 3,
+      "predicted_suites": [
+        "deleting-policies",
+        "generating-policies",
+        "image-validating-policies",
+        "mutating-policies",
+        "namespaced-validating-policies",
+        "validating-policies"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 16377,
+      "title": "chore(workflow): dynamically discover active branches for Trivy issue sync",
+      "n_files": 1,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16381,
+      "title": "fix: unblock ko image publish by replacing escaping kodata symlinks",
+      "n_files": 32,
+      "predicted_suites": [
+        "background-only",
+        "cleanup",
+        "generate",
+        "generating-policies",
+        "mutate",
+        "openreports",
+        "reports",
+        "validate",
+        "webhooks"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16360,
+      "title": "fix(deps): upgrade ristretto to v2",
+      "n_files": 3,
+      "predicted_suites": [
+        "custom-sigstore",
+        "sigstore-custom-tuf",
+        "verify-images",
+        "verify-manifests"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16361,
+      "title": "fix: upgrade go toolchain to 1.26.3 to resolve CVE-2026-39836",
+      "n_files": 4,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16371,
+      "title": "chore(deps): bump actions/cache from 5.0.3 to 6.1.0",
+      "n_files": 1,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 16291,
+      "title": "fix(helm): serialize gh-pages publishes to prevent missing kyverno-policies rele",
+      "n_files": 2,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 16297,
+      "title": "feat(cli): add CEL http.Post mocking test fixtures, duplicate validation check, ",
+      "n_files": 9,
+      "predicted_suites": [
+        "cli"
+      ],
+      "auto_merge_eligible": true,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 16347,
+      "title": "fix: validate stdin across apply paths",
+      "n_files": 2,
+      "predicted_suites": [
+        "cli"
+      ],
+      "auto_merge_eligible": true,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16301,
+      "title": "fix(background): scan NamespacedImageValidatingPolicy resources too",
+      "n_files": 9,
+      "predicted_suites": [
+        "image-validating-policies",
+        "mutating-admission-policy-reports",
+        "mutating-admission-policy-reports-alpha",
+        "mutating-admission-policy-reports-v1",
+        "mutating-policies",
+        "namespaced-image-validating-policies",
+        "namespaced-mutating-policies",
+        "namespaced-validating-policies",
+        "openreports",
+        "reports",
+        "reports-exclude-result",
+        "validating-admission-policy-reports",
+        "validating-policies"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "codecov",
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 16299,
+      "title": "feat: honor expired CEL PolicyExceptions",
+      "n_files": 13,
+      "predicted_suites": [
+        "cli",
+        "deleting-policies",
+        "generating-policies",
+        "image-validating-policies",
+        "mutating-policies",
+        "validating-policies"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16338,
+      "title": "fix(generate): support NamespacedGeneratingPolicy end-to-end",
+      "n_files": 22,
+      "predicted_suites": [
+        "background-only",
+        "generate",
+        "generating-policies",
+        "mutate",
+        "validate",
+        "webhook-configurations",
+        "webhooks"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "codecov",
+        "codecov"
+      ]
+    },
+    {
+      "pr_number": 16130,
+      "title": "fix(background): remove dead watcher entry on goroutine exit",
+      "n_files": 2,
+      "predicted_suites": [
+        "deleting-policies",
+        "namespaced-deleting-policies"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16329,
+      "title": "fix(policy): apply orphanDownstreamOnPolicyDelete to clone cleanup",
+      "n_files": 24,
+      "predicted_suites": [
+        "**",
+        "cli",
+        "generate"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 15872,
+      "title": "fix(generate): batch UpdateRequests to avoid etcd size limit",
+      "n_files": 4,
+      "predicted_suites": [
+        "generate"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 15906,
+      "title": "feat(pss-helm): add image to allowed volumetypes",
+      "n_files": 2,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16041,
+      "title": "Fix context and SyncWatchers race conditions in GeneratingPolicy",
+      "n_files": 10,
+      "predicted_suites": [
+        "deleting-policies",
+        "generating-policies",
+        "image-validating-policies",
+        "mutating-policies",
+        "namespaced-deleting-policies",
+        "validating-policies"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16280,
+      "title": "Fix UR regression",
+      "n_files": 2,
+      "predicted_suites": [
+        "deleting-policies",
+        "generating-policies",
+        "image-validating-policies",
+        "mutating-policies",
+        "validating-policies"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 16245,
+      "title": "fix: nil pointer panic in getGpolTriggers on ListResource error",
+      "n_files": 1,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "codecov",
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 16045,
+      "title": "chore(deps): bump github/codeql-action from 4.35.2 to 4.35.4",
+      "n_files": 2,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16171,
+      "title": "fix: wire gpolEngine and gpolProvider into policyController",
+      "n_files": 2,
+      "predicted_suites": [
+        "background-only",
+        "generate",
+        "generating-policies"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "codecov",
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 15824,
+      "title": "feat(cli): support multiple CRD paths and hook CRD processor into test command",
+      "n_files": 12,
+      "predicted_suites": [
+        "cli"
+      ],
+      "auto_merge_eligible": true,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16276,
+      "title": "return correct results for NotEquals type mismatch cases",
+      "n_files": 2,
+      "predicted_suites": [
+        "generate",
+        "mutate",
+        "rangeoperators",
+        "validate"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 16279,
+      "title": "docs: fix duplicated word in cleanuppolicy validateAuth comment",
+      "n_files": 1,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16178,
+      "title": "fix: support cel exception in cli apply 'exceptions-within-resources'",
+      "n_files": 3,
+      "predicted_suites": [
+        "cli"
+      ],
+      "auto_merge_eligible": true,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 16273,
+      "title": "ci: bump codecov-action to v6.0.2 to fix uploader GPG key verification",
+      "n_files": 1,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 9462,
+      "title": "Enabling many-to-one comparisons for `AnyNotIn` operator",
+      "n_files": 2,
+      "predicted_suites": [
+        "generate",
+        "mutate",
+        "rangeoperators",
+        "validate"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 9147,
+      "title": "making `images` variable consistent with the `image` variable",
+      "n_files": 4,
+      "predicted_suites": [
+        "generate",
+        "mutate",
+        "rangeoperators",
+        "validate"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16241,
+      "title": "chore: regenerate CRDs and docs after GHSA-79gf-7frw-68m9 API bump",
+      "n_files": 17,
+      "predicted_suites": [
+        "cli",
+        "deleting-policies",
+        "generate-mutating-admission-policy",
+        "generate-mutating-admission-policy-alpha",
+        "generate-mutating-admission-policy-v1",
+        "generate-validating-admission-policy",
+        "generating-policies",
+        "image-validating-policies",
+        "mutating-admission-policy-reports",
+        "mutating-admission-policy-reports-alpha",
+        "mutating-admission-policy-reports-v1",
+        "mutating-policies",
+        "namespaced-deleting-policies",
+        "namespaced-generating-policies",
+        "namespaced-mutating-policies",
+        "namespaced-validating-policies",
+        "validating-admission-policy-reports",
+        "validating-policies"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16207,
+      "title": "feat: Enable Cosign verbosity debugging",
+      "n_files": 3,
+      "predicted_suites": [
+        "generate",
+        "mutate",
+        "validate",
+        "webhooks"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "codecov",
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 16208,
+      "title": "fix: do not abort required validation on non-matching images",
+      "n_files": 2,
+      "predicted_suites": [
+        "policy-validation",
+        "validate"
+      ],
+      "auto_merge_eligible": true,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 16219,
+      "title": "fix: add access to clusterroles and bindings in the standard kyverno config",
+      "n_files": 1,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16220,
+      "title": "fix: add the readiness checker to the ci image archive",
+      "n_files": 1,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 16206,
+      "title": "test(integration): migrate gpol sync-clone scenarios from chainsaw",
+      "n_files": 3,
+      "predicted_suites": [],
+      "auto_merge_eligible": true,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "codecov",
+        "codecov"
+      ]
+    },
+    {
+      "pr_number": 16161,
+      "title": "fix(cli): allow multiple CRDs in to be in the --crd-path file",
+      "n_files": 9,
+      "predicted_suites": [
+        "cli"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16200,
+      "title": "fix(dpol): apply namespaceSelector against Namespace resource own labels",
+      "n_files": 2,
+      "predicted_suites": [
+        "deleting-policies",
+        "namespaced-deleting-policies"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16110,
+      "title": "ci: cache envtest binaries between framework test runs",
+      "n_files": 1,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": true,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 15966,
+      "title": "test: add additional dpol controller integration tests",
+      "n_files": 2,
+      "predicted_suites": [],
+      "auto_merge_eligible": true,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16197,
+      "title": "docs(perf-testing): add v1.18.1 CEL admission latency benchmarks and reorganize ",
+      "n_files": 84,
+      "predicted_suites": [],
+      "auto_merge_eligible": true,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16055,
+      "title": "fix(namespacedmutatingpolicy): fix crash loop, missing status, and recorder key",
+      "n_files": 6,
+      "predicted_suites": [
+        "webhook-configurations",
+        "webhooks"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16005,
+      "title": "test: add NewTestEnvWithOptions for opt-in policy type wiring",
+      "n_files": 3,
+      "predicted_suites": [],
+      "auto_merge_eligible": true,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "codecov",
+        "codecov"
+      ]
+    },
+    {
+      "pr_number": 16181,
+      "title": "fix(Makefile): wire readiness-checker into local kind dev workflow",
+      "n_files": 1,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 16123,
+      "title": "feat(cli): add offline mock support for k8sresource-backed global context entrie",
+      "n_files": 28,
+      "predicted_suites": [
+        "cli",
+        "deleting-policies",
+        "generating-policies",
+        "image-validating-policies",
+        "mutating-policies",
+        "validating-policies"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "Cleanup artifacts"
+      ]
+    },
+    {
+      "pr_number": 16149,
+      "title": "feat: add opertional runbook",
+      "n_files": 1,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16151,
+      "title": "feat: add NOTICE and embed attribution in container images",
+      "n_files": 17,
+      "predicted_suites": [
+        "background-only",
+        "cleanup",
+        "generate",
+        "generating-policies",
+        "mutate",
+        "openreports",
+        "reports",
+        "validate",
+        "webhooks"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16143,
+      "title": "feat: update api docs",
+      "n_files": 1,
+      "predicted_suites": [],
+      "auto_merge_eligible": true,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16154,
+      "title": "chore: clarify performance baselines",
+      "n_files": 1,
+      "predicted_suites": [],
+      "auto_merge_eligible": true,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16155,
+      "title": "feat(helm): add optional PrometheusRule template",
+      "n_files": 4,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 15916,
+      "title": "  fix(engine/vpol): include CEL validation expression index in policy report pro",
+      "n_files": 3,
+      "predicted_suites": [
+        "namespaced-validating-policies",
+        "validating-policies"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 16150,
+      "title": "chore: update dependency policy",
+      "n_files": 1,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16145,
+      "title": "chore: point to security assessments",
+      "n_files": 1,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16144,
+      "title": "feat: add non-goals",
+      "n_files": 1,
+      "predicted_suites": [],
+      "auto_merge_eligible": true,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "Check milestone",
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 16132,
+      "title": "feat(helm): support extraArgs in CRDs migration job",
+      "n_files": 3,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 16115,
+      "title": "feat: add updaterequest total gauge metric",
+      "n_files": 6,
+      "predicted_suites": [
+        "background-only",
+        "generate",
+        "generating-policies",
+        "mutate",
+        "validate",
+        "webhooks"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16114,
+      "title": "fix: skip report creation for subresources with empty name/UID",
+      "n_files": 4,
+      "predicted_suites": [
+        "deleting-policies",
+        "generate",
+        "namespaced-deleting-policies"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "codecov"
+      ]
+    },
+    {
+      "pr_number": 16099,
+      "title": "fix(gctx): correctly track per-loader load state to avoid skipping LoadData",
+      "n_files": 1,
+      "predicted_suites": [
+        "generate",
+        "mutate",
+        "rangeoperators",
+        "validate"
+      ],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": [
+        "codecov",
+        "Check milestone"
+      ]
+    },
+    {
+      "pr_number": 16003,
+      "title": "fix: validate name field in globalReference context entry",
+      "n_files": 2,
+      "predicted_suites": [],
+      "auto_merge_eligible": false,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 15846,
+      "title": "Feat/cli apply cross resource",
+      "n_files": 20,
+      "predicted_suites": [
+        "cli"
+      ],
+      "auto_merge_eligible": true,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    },
+    {
+      "pr_number": 16097,
+      "title": "chore: add new gpol samples",
+      "n_files": 13,
+      "predicted_suites": [],
+      "auto_merge_eligible": true,
+      "requires_human_review": false,
+      "failed_jobs_caught_by_scope": [],
+      "failed_jobs_MISSED_by_scope": [],
+      "failed_jobs_unmapped": []
+    }
+  ]
+}
