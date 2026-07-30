@@ -1,0 +1,22 @@
+version: 1
+
+# Only reviewed, repository-local Markdown can ground an answer. Website,
+# issue, PR, and chat content are intentionally outside this trust boundary.
+source_paths:
+  - README.md
+  - CONTRIBUTING.md
+  - DEVELOPMENT.md
+  - docs/dev
+  - docs/user
+
+limits:
+  max_source_files: 100
+  max_source_bytes: 262144
+  max_section_chars: 5000
+  max_excerpt_chars: 800
+  max_results: 3
+  max_question_bytes: 2048
+
+confidence:
+  min_distinct_query_terms: 2
+  min_weighted_coverage: 0.45
