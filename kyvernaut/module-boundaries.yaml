@@ -1,0 +1,30 @@
+version: 1
+
+decision:
+  repository_strategy: federated
+  local_workspace_policy: independent-modules
+  recommendation: retain-current-boundaries
+  rationale_document: kyvernaut/MODULE_BOUNDARIES.md
+
+local_modules:
+  - path: .
+    module: github.com/kyverno/kyverno
+    role: product-runtime
+  - path: hack/api-group-resources
+    module: github.com/kyverno/kyverno/hack/api-group-resources
+    role: isolated-build-tool
+  - path: hack/controller-gen
+    module: github.com/kyverno/kyverno/hack/controller-gen
+    role: isolated-build-tool
+
+external_boundaries:
+  - module: github.com/kyverno/api
+    role: published-api-contract
+  - module: github.com/kyverno/sdk
+    role: published-integration-sdk
+
+revisit_when:
+  - Cross-repository changes routinely cannot be released safely in dependency order.
+  - Version-skew incidents outweigh independent API and SDK release benefits.
+  - Maintainers adopt shared ownership, compatibility, and release policies.
+  - Measured CI and contributor costs justify the migration and larger blast radius.
