@@ -27,8 +27,8 @@ Usage:
 Output: human-readable plan on stdout, machine-readable JSON with --json.
 """
 import argparse
-import fnmatch
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -39,10 +39,175 @@ except ImportError:
     sys.exit("Missing dependency: pip install pyyaml --break-system-packages")
 
 
-def load_rules(map_path: Path):
-    with open(map_path) as f:
+VALID_RISKS = {"low", "medium", "high"}
+UNIT_TARGET = re.compile(r"^\./(?:[A-Za-z0-9_.-]+/)*\.\.\.$")
+
+
+def load_manifest(map_path: Path) -> dict:
+    with map_path.open(encoding="utf-8") as f:
         data = yaml.safe_load(f)
-    return data["rules"]
+    errors = validate_manifest(data)
+    if errors:
+        raise ValueError("invalid path-test map:\n  - " + "\n  - ".join(errors))
+    return data
+
+
+def load_rules(map_path: Path):
+    return load_manifest(map_path)["rules"]
+
+
+def validate_manifest(data: dict) -> list[str]:
+    """Validate safety-relevant map invariants before using its decisions."""
+    errors = []
+    if not isinstance(data, dict):
+        return ["document must be a mapping"]
+    if data.get("version") != 1:
+        errors.append("version must be 1")
+
+    rules = data.get("rules")
+    if not isinstance(rules, list) or not rules:
+        return errors + ["rules must be a non-empty list"]
+
+    ids = set()
+    prefixes = {}
+    for index, rule in enumerate(rules):
+        where = f"rules[{index}]"
+        if not isinstance(rule, dict):
+            errors.append(f"{where} must be a mapping")
+            continue
+        rule_id = rule.get("id")
+        if not isinstance(rule_id, str) or not rule_id:
+            errors.append(f"{where}.id must be a non-empty string")
+            rule_id = where
+        elif rule_id in ids:
+            errors.append(f"duplicate rule id: {rule_id}")
+        ids.add(rule_id)
+
+        matches = rule.get("match")
+        if not isinstance(matches, list) or not matches or not all(isinstance(item, str) and item for item in matches):
+            errors.append(f"rule {rule_id}: match must be a non-empty string list")
+            matches = []
+        for prefix in matches:
+            owner = prefixes.get(prefix)
+            if owner and owner != rule_id:
+                errors.append(f"match prefix {prefix!r} is claimed by both {owner!r} and {rule_id!r}")
+            prefixes[prefix] = rule_id
+
+        risk = rule.get("risk", "low")
+        if risk not in VALID_RISKS:
+            errors.append(f"rule {rule_id}: invalid risk {risk!r}")
+        for field in ("unit", "conformance", "cli"):
+            values = rule.get(field, [])
+            if not isinstance(values, list) or not all(isinstance(item, str) and item for item in values):
+                errors.append(f"rule {rule_id}: {field} must be a string list")
+
+        if rule.get("auto_merge_candidate"):
+            if risk != "low":
+                errors.append(f"rule {rule_id}: auto-merge candidates must be low risk")
+            if rule.get("requires_human_review"):
+                errors.append(f"rule {rule_id}: auto-merge candidates cannot require human review")
+            if rule.get("codegen_check"):
+                errors.append(f"rule {rule_id}: auto-merge candidates cannot require code generation")
+
+    coverage = data.get("coverage")
+    if not isinstance(coverage, dict):
+        errors.append("coverage must be a mapping")
+    else:
+        for field in ("pkg_fallback_allowlist", "conformance_unmapped_allowlist"):
+            values = coverage.get(field)
+            if not isinstance(values, list) or not all(isinstance(item, str) and item for item in values):
+                errors.append(f"coverage.{field} must be a string list")
+            elif len(values) != len(set(values)):
+                errors.append(f"coverage.{field} contains duplicates")
+
+    return errors
+
+
+def _top_level_directories(root: Path) -> set[str]:
+    if not root.is_dir():
+        return set()
+    return {entry.name for entry in root.iterdir() if entry.is_dir()}
+
+
+def validate_repository_coverage(repo_root: Path, manifest: dict) -> list[str]:
+    """Detect new or stale top-level source/test areas in the checked-out repo.
+
+    Explicitly mapped directories are accepted. Existing gaps must be named in
+    an allowlist, which makes a newly added directory fail closed instead of
+    silently inheriting the broad fallback forever.
+    """
+    rules = manifest["rules"]
+    coverage = manifest["coverage"]
+    errors = []
+
+    actual_pkg = _top_level_directories(repo_root / "pkg")
+    explicit_pkg = set()
+    for rule in rules:
+        if rule["id"] == "pkg-fallback":
+            continue
+        for prefix in rule["match"]:
+            if prefix.startswith("pkg/"):
+                name = prefix.removeprefix("pkg/").split("/", 1)[0]
+                if name:
+                    explicit_pkg.add(name)
+    pkg_allowlist = set(coverage["pkg_fallback_allowlist"])
+    missing_pkg = actual_pkg - explicit_pkg - pkg_allowlist
+    stale_pkg = pkg_allowlist - actual_pkg
+    if missing_pkg:
+        errors.append(
+            "new pkg/ directories need an explicit rule or fallback approval: "
+            + ", ".join(sorted(missing_pkg))
+        )
+    if stale_pkg:
+        errors.append("stale pkg fallback allowlist entries: " + ", ".join(sorted(stale_pkg)))
+
+    conformance_root = repo_root / "test/conformance/chainsaw"
+    actual_conformance = _top_level_directories(conformance_root)
+    mapped_conformance = set()
+    for rule in rules:
+        for suite in rule.get("conformance", []):
+            name = suite.split("/", 1)[0]
+            if name not in {"*", "**"}:
+                mapped_conformance.add(name)
+    conformance_allowlist = set(coverage["conformance_unmapped_allowlist"])
+    missing_conformance = actual_conformance - mapped_conformance - conformance_allowlist
+    stale_conformance = conformance_allowlist - actual_conformance
+    nonexistent_conformance = mapped_conformance - actual_conformance
+    if missing_conformance:
+        errors.append(
+            "new conformance suites need a mapping or explicit no-mapping approval: "
+            + ", ".join(sorted(missing_conformance))
+        )
+    if stale_conformance:
+        errors.append(
+            "stale conformance no-mapping allowlist entries: "
+            + ", ".join(sorted(stale_conformance))
+        )
+    if nonexistent_conformance:
+        errors.append(
+            "mapped conformance suites do not exist: "
+            + ", ".join(sorted(nonexistent_conformance))
+        )
+
+    missing_unit_targets = []
+    for rule in rules:
+        for target in rule.get("unit", []):
+            if target == "./..." or "<dir>" in target:
+                continue
+            if not UNIT_TARGET.fullmatch(target):
+                missing_unit_targets.append(
+                    f"{rule['id']} has unsafe target {target!r}"
+                )
+                continue
+            directory = target.removeprefix("./").removesuffix("...")
+            if directory and not (repo_root / directory).is_dir():
+                missing_unit_targets.append(
+                    f"{rule['id']} target does not exist: {target}"
+                )
+    if missing_unit_targets:
+        errors.append("invalid mapped unit targets: " + "; ".join(missing_unit_targets))
+
+    return errors
 
 
 class AmbiguousMatch(Exception):
@@ -52,6 +217,13 @@ class AmbiguousMatch(Exception):
     bug that would let a security-sensitive change slip through unreviewed."""
 
 
+def _prefix_matches(path: str, prefix: str) -> bool:
+    """Match a repository path prefix without crossing a path boundary."""
+    if prefix.endswith("/"):
+        return path.startswith(prefix)
+    return path == prefix or path.startswith(prefix + "/")
+
+
 def match_rule(path: str, rules: list):
     """Return the rule whose match prefix is the longest (most specific) fit
     for this path -- same principle as CODEOWNERS/gitignore precedence.
@@ -59,7 +231,7 @@ def match_rule(path: str, rules: list):
     candidates = []
     for rule in rules:
         for prefix in rule["match"]:
-            if path.startswith(prefix):
+            if _prefix_matches(path, prefix):
                 candidates.append((len(prefix), rule))
     if not candidates:
         return None
@@ -96,6 +268,7 @@ def scope(changed_files: list, rules: list):
     risk = "low"
     review_reasons = []
     matched, unmatched, low_confidence, ambiguous = [], [], [], []
+    auto_merge_blockers = []
 
     risk_rank = {"low": 0, "medium": 1, "high": 2}
 
@@ -113,6 +286,10 @@ def scope(changed_files: list, rules: list):
             unmatched.append(path)
             continue
         matched.append((path, rule["id"]))
+        if not rule.get("auto_merge_candidate", False):
+            auto_merge_blockers.append(
+                f"{path} -> rule '{rule['id']}' is not approved for autonomous merge"
+            )
 
         # A rule can match (so the file isn't "unmatched") while still giving
         # zero conformance coverage -- this is the dangerous case: the plan
@@ -159,9 +336,17 @@ def scope(changed_files: list, rules: list):
         # not actually sure this scope is complete" -- neither should be
         # allowed to slide through as auto-merge eligible just because no
         # explicit high-risk rule fired.
+        "auto_merge_blockers": auto_merge_blockers,
+        # This is only scope-level candidacy. The caller must additionally
+        # authenticate the bot actor, classify the version bump as patch/minor,
+        # require green CI, and honor hold/kill-switch controls.
         "auto_merge_eligible": (
-            not review_reasons and risk == "low"
-            and not low_confidence and not unmatched
+            bool(changed_files)
+            and not review_reasons
+            and risk == "low"
+            and not low_confidence
+            and not unmatched
+            and not auto_merge_blockers
         ),
     }
 
@@ -170,7 +355,10 @@ def render(plan: dict) -> str:
     lines = []
     lines.append(f"Changed files: {len(plan['changed_files'])}")
     lines.append(f"Overall risk: {plan['risk'].upper()}")
-    lines.append(f"Auto-merge eligible (by scope alone, still gated on green CI): {plan['auto_merge_eligible']}")
+    lines.append(
+        "Auto-merge candidate (scope only; actor, semver, CI, hold label, and "
+        f"kill switch still gate): {plan['auto_merge_eligible']}"
+    )
     if plan["requires_human_review"]:
         lines.append("\n⚠️  HUMAN REVIEW REQUIRED — do not auto-merge:")
         for r in plan["review_reasons"]:
@@ -218,9 +406,26 @@ def main():
     ap.add_argument("--repo", default=".", help="Path to the kyverno git repo (for --git-diff/--commit)")
     ap.add_argument("--map", default=str(Path(__file__).parent / "path-test-map.yaml"))
     ap.add_argument("--json", action="store_true", help="Emit machine-readable JSON instead of text")
+    ap.add_argument(
+        "--validate",
+        action="store_true",
+        help="Validate the manifest and repository directory coverage; may be used without a diff input",
+    )
     args = ap.parse_args()
 
-    rules = load_rules(Path(args.map))
+    manifest = load_manifest(Path(args.map))
+    rules = manifest["rules"]
+    if args.validate:
+        errors = validate_repository_coverage(Path(args.repo), manifest)
+        if errors:
+            print("Path-test map validation failed:", file=sys.stderr)
+            for error in errors:
+                print(f"  - {error}", file=sys.stderr)
+            return 1
+        print("Path-test map and repository coverage are valid.")
+        if not (args.diff_file or args.commit or args.git_diff):
+            return 0
+
     changed_files = get_changed_files(args)
     plan = scope(changed_files, rules)
 
@@ -228,7 +433,8 @@ def main():
         print(json.dumps(plan, indent=2))
     else:
         print(render(plan))
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

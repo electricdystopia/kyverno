@@ -3,9 +3,20 @@ Sanity tests for scope_tests.py's rule-matching logic. Run with:
     python3 -m pytest test_scope_tests.py -q
 """
 from pathlib import Path
-from scope_tests import load_rules, scope
+import copy
 
-RULES = load_rules(Path(__file__).parent / "path-test-map.yaml")
+from scope_tests import (
+    load_manifest,
+    load_rules,
+    match_rule,
+    scope,
+    validate_manifest,
+    validate_repository_coverage,
+)
+
+MAP_PATH = Path(__file__).parent / "path-test-map.yaml"
+MANIFEST = load_manifest(MAP_PATH)
+RULES = load_rules(MAP_PATH)
 
 
 def test_security_sensitive_path_requires_review():
@@ -20,6 +31,22 @@ def test_dependency_only_diff_is_low_risk_and_mergeable():
     assert plan["risk"] == "low"
     assert plan["requires_human_review"] is False
     assert plan["auto_merge_eligible"] is True
+
+
+def test_non_dependency_low_risk_diff_is_not_auto_merge_candidate():
+    plan = scope(["test/conformance/chainsaw/validate/new-fixture.yaml"], RULES)
+    assert plan["risk"] == "low"
+    assert plan["auto_merge_eligible"] is False
+    assert plan["auto_merge_blockers"]
+
+
+def test_mixed_dependency_and_source_diff_is_not_auto_merge_candidate():
+    plan = scope(["go.mod", "go.sum", "pkg/toggle/toggle.go"], RULES)
+    assert plan["auto_merge_eligible"] is False
+
+
+def test_empty_diff_is_not_auto_merge_candidate():
+    assert scope([], RULES)["auto_merge_eligible"] is False
 
 
 def test_api_type_change_forces_codegen_and_review():
@@ -73,3 +100,28 @@ def test_engine_api_resolves_without_ambiguity():
     # hand-inspection -- exactly the kind of gap this backtest is for.
     plan = scope(["pkg/engine/api/client.go"], RULES)
     assert plan["ambiguous_matches"] == []
+
+
+def test_prefix_match_does_not_cross_path_boundary():
+    assert match_rule("go.mod.backup", RULES) is None
+    assert match_rule("pkg/cosigner/verify.go", RULES)["id"] == "pkg-fallback"
+
+
+def test_manifest_rejects_auto_merge_on_high_risk_rule():
+    manifest = copy.deepcopy(MANIFEST)
+    rule = next(rule for rule in manifest["rules"] if rule["id"] == "image-verification")
+    rule["auto_merge_candidate"] = True
+    errors = validate_manifest(manifest)
+    assert any("auto-merge candidates must be low risk" in error for error in errors)
+
+
+def test_repository_coverage_manifest_matches_checkout():
+    repo_root = Path(__file__).parents[1]
+    assert validate_repository_coverage(repo_root, MANIFEST) == []
+
+
+def test_repository_coverage_detects_new_package(tmp_path):
+    (tmp_path / "pkg/new-area").mkdir(parents=True)
+    (tmp_path / "test/conformance/chainsaw").mkdir(parents=True)
+    errors = validate_repository_coverage(tmp_path, MANIFEST)
+    assert any("new-area" in error for error in errors)

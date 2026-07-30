@@ -5,7 +5,7 @@
 # proposal: it lets both humans and agents answer "what should I run for this
 # diff?" without re-deriving repo knowledge every time.
 #
-# Consumed by scripts/scope_tests.py (the Phase 2 diff-to-test-scope mapper).
+# Consumed by kyvernaut/scope_tests.py (the Phase 2 diff-to-test-scope mapper).
 #
 # Rule fields:
 #   match           - list of path prefixes / glob fragments that trigger this rule
@@ -18,6 +18,47 @@
 #   requires_human_review - if true, an automation agent must never auto-merge
 #                           changes matching this rule regardless of CI result
 #   note            - human-readable rationale, shown in agent output
+
+version: 1
+
+# Current top-level directories which intentionally use the generic pkg/
+# fallback or have no source-side conformance mapping. The validator compares
+# these lists with the checkout so a newly introduced package/suite cannot
+# silently inherit incomplete coverage. Moving an entry out of an allowlist
+# and into an explicit rule is always preferred.
+coverage:
+  pkg_fallback_allowlist:
+    - auth
+    - breaker
+    - cli
+    - config
+    - event
+    - informers
+    - leaderelection
+    - logging
+    - metrics
+    - policycache
+    - profiling
+    - pss
+    - tls
+    - toggle
+    - tracing
+    - userinfo
+    - version
+  conformance_unmapped_allowlist:
+    - _step-templates
+    - assert
+    - cel
+    - configs
+    - deferred
+    - events
+    - filter
+    - flags
+    - force-failure-policy-ignore
+    - lease
+    - rbac
+    - tls-certificates
+    - ttl
 
 rules:
 
@@ -56,7 +97,7 @@ rules:
   # ---- Image verification (cosign/notary) — security sensitive ----
   - id: image-verification
     match: ["pkg/cosign", "pkg/notary", "pkg/image", "pkg/sigstoretuf"]
-    unit: ["./pkg/image/...", "./pkg/cosign/...", "./pkg/notary/...", "./pkg/sigstoretuf/..."]
+    unit: ["./pkg/image/...", "./pkg/sigstoretuf/..."]
     conformance: ["verify-images/**", "verify-manifests/**", "custom-sigstore/**", "sigstore-custom-tuf/**"]
     risk: high
     requires_human_review: true
@@ -201,9 +242,21 @@ rules:
     risk: medium
     note: "Not covered by Go tests. Route to `helm lint` + `ct lint` + charts/*/ci/*.yaml value-file matrix instead."
 
+  # ---- Dependency metadata: the only scope approved as an autonomous
+  # merge candidate. This flag is deliberately necessary-but-not-sufficient:
+  # the caller must still verify Dependabot/Renovate identity, patch/minor
+  # semver, green required checks, absence of hold, and the kill switch.
+  - id: dependency-metadata
+    match: ["go.mod", "go.sum"]
+    unit: []
+    conformance: []
+    risk: low
+    auto_merge_candidate: true
+    note: "Scope-level candidate only; never merge without the external actor, semver, CI, hold-label, and kill-switch checks."
+
   # ---- Non-source paths that don't need their own test rule ----
   - id: ignore-noise
-    match: ["test/conformance/chainsaw/", "docs/user/crd/", "go.mod", "go.sum", "config/crds/"]
+    match: ["test/conformance/chainsaw/", "docs/user/crd/", "config/crds/"]
     unit: []
     conformance: []
     risk: low
