@@ -1,0 +1,235 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+
+name: Kyvernaut issue triage
+
+on:
+  issues:
+    types: [opened, edited, labeled, unlabeled]
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: kyvernaut-issue-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  triage:
+    name: Deterministic triage and reversible managed labels
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check repository kill switch
+        id: pause
+        shell: bash
+        env:
+          PAUSE_VALUE: ${{ vars.KYVERNAUT_PAUSED }}
+        run: |
+          value="${PAUSE_VALUE//[[:space:]]/}"
+          value="${value,,}"
+          case "$value" in
+            1|true|yes|on) echo "paused=true" >> "$GITHUB_OUTPUT" ;;
+            *) echo "paused=false" >> "$GITHUB_OUTPUT" ;;
+          esac
+
+      - name: Checkout trusted default branch
+        if: steps.pause.outputs.paused != 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+
+      - name: Set up Python
+        if: steps.pause.outputs.paused != 'true'
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: kyvernaut/requirements-runtime.txt
+
+      - name: Install hash-locked runtime dependency
+        if: steps.pause.outputs.paused != 'true'
+        run: >-
+          python -m pip install
+          --only-binary=:all:
+          --require-hashes
+          --requirement kyvernaut/requirements-runtime.txt
+
+      - name: Generate triage decision
+        if: steps.pause.outputs.paused != 'true'
+        id: decision
+        env:
+          KYVERNAUT_PAUSED: ${{ vars.KYVERNAUT_PAUSED }}
+        run: |
+          python kyvernaut/issue_triage.py \
+            --event "$GITHUB_EVENT_PATH" \
+            --output-dir "$RUNNER_TEMP/kyvernaut-issue-triage" \
+            --run-id "$GITHUB_RUN_ID" \
+            --run-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            --github-output "$GITHUB_OUTPUT"
+
+      - name: Revalidate and apply authorized managed labels
+        if: >-
+          steps.pause.outputs.paused != 'true' &&
+          steps.decision.outputs.label_action_authorized == 'true'
+        id: labels
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          DECISION_JSON: ${{ runner.temp }}/kyvernaut-issue-triage/issue-triage-decision.json
+          EXECUTION_JSON: ${{ runner.temp }}/kyvernaut-issue-triage/issue-triage-execution.json
+        with:
+          script: |
+            const crypto = require("crypto");
+            const fs = require("fs");
+            const decision = JSON.parse(fs.readFileSync(process.env.DECISION_JSON, "utf8"));
+            const action = decision.label_action || {};
+            const result = {
+              schema_version: 1,
+              decision_id: decision.decision_id,
+              run_id: String(context.runId),
+              issue_number: context.payload.issue.number,
+              status: "skipped",
+              labels_applied: [],
+            };
+            let executionFailed = false;
+            try {
+              const requested = action.requested_labels;
+              const invariantFailure =
+                decision.schema_version !== 1 ||
+                decision.mode !== "active" ||
+                !action.action_authorized ||
+                action.recommendation !== "apply" ||
+                decision.blockers.length !== 0 ||
+                String(decision.run_id) !== String(context.runId) ||
+                decision.evidence.issue_number !== context.payload.issue.number ||
+                !Array.isArray(requested) ||
+                requested.length === 0 ||
+                requested.length > action.max_labels_per_issue ||
+                action.max_labels_per_issue < 1 ||
+                action.max_labels_per_issue > 10 ||
+                new Set(requested.map((label) => label.toLowerCase())).size !==
+                  requested.length ||
+                JSON.stringify(requested) !==
+                  JSON.stringify(decision.evidence.labels_to_apply);
+              if (invariantFailure) {
+                result.status = "invalid_authorization";
+                result.reason = "decision failed label executor invariants";
+                executionFailed = true;
+              } else {
+                const response = await github.rest.issues.get({
+                  ...context.repo,
+                  issue_number: context.payload.issue.number,
+                });
+                const issue = response.data;
+                const labels = issue.labels.map((label) => label.name).sort();
+                const bodyHash = crypto
+                  .createHash("sha256")
+                  .update(issue.body || "", "utf8")
+                  .digest("hex");
+                const titleHash = crypto
+                  .createHash("sha256")
+                  .update(issue.title || "", "utf8")
+                  .digest("hex");
+                const evidenceChanged =
+                  issue.state !== "open" ||
+                  Boolean(issue.pull_request) ||
+                  bodyHash !== decision.evidence.body_sha256 ||
+                  titleHash !== decision.evidence.title_sha256 ||
+                  JSON.stringify(labels) !==
+                    JSON.stringify(decision.evidence.existing_labels);
+                if (evidenceChanged) {
+                  result.reason = "issue evidence changed after authorization";
+                } else {
+                  const repositoryLabels = await github.paginate(
+                    github.rest.issues.listLabelsForRepo,
+                    {
+                      ...context.repo,
+                      per_page: 100,
+                    }
+                  );
+                  const known = new Set(
+                    repositoryLabels.map((label) => label.name.toLowerCase())
+                  );
+                  const missing = requested.filter(
+                    (label) => !known.has(label.toLowerCase())
+                  );
+                  if (missing.length > 0) {
+                    result.status = "invalid_authorization";
+                    result.reason =
+                      "configured repository label(s) do not exist: " + missing.join(", ");
+                    executionFailed = true;
+                  } else {
+                    await github.rest.issues.addLabels({
+                      ...context.repo,
+                      issue_number: issue.number,
+                      labels: requested,
+                    });
+                    result.status = "applied";
+                    result.labels_applied = requested;
+                  }
+                }
+              }
+            } catch (error) {
+              result.status = "api_error";
+              result.reason = error.message;
+              executionFailed = true;
+            }
+            fs.writeFileSync(
+              process.env.EXECUTION_JSON,
+              JSON.stringify(result, null, 2) + "\n"
+            );
+            core.setOutput("execution_failed", String(executionFailed));
+
+      - name: Create or update triage comment
+        if: >-
+          always() &&
+          steps.pause.outputs.paused != 'true' &&
+          steps.decision.outputs.comment_allowed == 'true'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          COMMENT_PATH: ${{ runner.temp }}/kyvernaut-issue-triage/comment.md
+        with:
+          script: |
+            const fs = require("fs");
+            const marker = "<!-- kyvernaut:issue-triage:v1 -->";
+            const body = fs.readFileSync(process.env.COMMENT_PATH, "utf8");
+            const issue_number = context.payload.issue.number;
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              ...context.repo,
+              issue_number,
+              per_page: 100,
+            });
+            const existing = comments.find((comment) =>
+              comment.user?.login === "github-actions[bot]" &&
+              comment.body?.includes(marker)
+            );
+            if (existing) {
+              if (existing.body !== body) {
+                await github.rest.issues.updateComment({
+                  ...context.repo,
+                  comment_id: existing.id,
+                  body,
+                });
+              }
+            } else {
+              await github.rest.issues.createComment({
+                ...context.repo,
+                issue_number,
+                body,
+              });
+            }
+
+      - name: Upload immutable triage audit
+        if: always() && steps.pause.outputs.paused != 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: kyvernaut-issue-${{ github.event.issue.number }}-${{ github.run_id }}
+          path: ${{ runner.temp }}/kyvernaut-issue-triage
+          retention-days: 30
+
+      - name: Fail after preserving label API errors
+        if: steps.labels.outputs.execution_failed == 'true'
+        run: |
+          echo "Managed label execution failed; the audit artifact was preserved." >&2
+          exit 1

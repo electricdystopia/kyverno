@@ -524,3 +524,55 @@ spam:
 merge-conflicts:
   color: E65100
   description: PR has merge conflicts
+
+##############################################################################
+# Issue triage and Kyvernaut controls
+##############################################################################
+
+bug:
+  color: d73a4a
+  description: Something is not working
+
+enhancement:
+  color: a2eeef
+  description: New feature or improvement
+
+question:
+  color: d876e3
+  description: Further information is requested
+
+triage:
+  color: fbca04
+  description: Needs maintainer triage
+
+security:
+  color: B60205
+  description: Security-sensitive issue requiring private maintainer handling
+
+type:cli:
+  color: 0e8a16
+  description: Kyverno CLI issue
+
+docs-not-required:
+  color: CE93D8
+  description: Maintainers confirmed no documentation change is required
+
+kyvernaut:hold:
+  color: B60205
+  description: Prevent Kyvernaut dependency or hygiene actions
+
+kyvernaut:no-nudge:
+  color: B60205
+  description: Suppress Kyvernaut PR hygiene reminders
+
+kyvernaut:no-triage:
+  color: B60205
+  description: Suppress Kyvernaut issue triage actions
+
+kyvernaut:repro-approved:
+  color: 0E8A16
+  description: Maintainer approved isolated Kyvernaut reproduction
+
+kyvernaut:docs-reviewed:
+  color: 5319E7
+  description: Maintainer reviewed the documentation impact

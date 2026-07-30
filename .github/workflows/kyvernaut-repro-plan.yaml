@@ -1,0 +1,427 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+
+name: Kyvernaut reproduction
+
+on:
+  issues:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: Issue number carrying maintainer-approved fenced YAML
+        required: true
+        type: number
+
+permissions: {}
+
+concurrency:
+  group: kyvernaut-repro-${{ github.event.issue.number || inputs.issue_number }}
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    name: Build and authorize sanitized plan
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.label.name == 'kyvernaut:repro-approved'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: read
+    outputs:
+      execution_authorized: ${{ steps.plan.outputs.execution_authorized }}
+      decision_id: ${{ steps.plan.outputs.decision_id }}
+    steps:
+      - name: Require trusted default branch dispatch
+        if: >-
+          github.event_name == 'workflow_dispatch' &&
+          github.ref_name != github.event.repository.default_branch
+        run: |
+          echo "Reproduction must be dispatched from the repository default branch." >&2
+          exit 1
+
+      - name: Check repository kill switch
+        id: pause
+        shell: bash
+        env:
+          PAUSE_VALUE: ${{ vars.KYVERNAUT_PAUSED }}
+        run: |
+          value="${PAUSE_VALUE//[[:space:]]/}"
+          value="${value,,}"
+          case "$value" in
+            1|true|yes|on) echo "paused=true" >> "$GITHUB_OUTPUT" ;;
+            *) echo "paused=false" >> "$GITHUB_OUTPUT" ;;
+          esac
+
+      - name: Checkout trusted workflow commit
+        if: steps.pause.outputs.paused != 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Set up Python
+        if: steps.pause.outputs.paused != 'true'
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: kyvernaut/requirements-runtime.txt
+
+      - name: Install hash-locked runtime dependency
+        if: steps.pause.outputs.paused != 'true'
+        run: >-
+          python -m pip install
+          --only-binary=:all:
+          --require-hashes
+          --requirement kyvernaut/requirements-runtime.txt
+
+      - name: Fetch issue as JSON data
+        if: steps.pause.outputs.paused != 'true'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          ISSUE_JSON: ${{ runner.temp }}/kyvernaut-repro-issue.json
+          ISSUE_NUMBER: ${{ github.event.issue.number || inputs.issue_number }}
+        with:
+          script: |
+            const fs = require("fs");
+            const issue_number = Number.parseInt(process.env.ISSUE_NUMBER, 10);
+            if (!Number.isSafeInteger(issue_number) || issue_number <= 0) {
+              core.setFailed("issue_number must be a positive integer");
+              return;
+            }
+            const response = await github.rest.issues.get({
+              ...context.repo,
+              issue_number,
+            });
+            if (response.data.pull_request) {
+              core.setFailed("reproduction accepts issues, not pull requests");
+              return;
+            }
+            fs.writeFileSync(process.env.ISSUE_JSON, JSON.stringify(response.data));
+
+      - name: Build sanitized execution plan
+        if: steps.pause.outputs.paused != 'true'
+        id: plan
+        env:
+          KYVERNAUT_PAUSED: ${{ vars.KYVERNAUT_PAUSED }}
+        run: |
+          python kyvernaut/repro_plan.py \
+            --issue "$RUNNER_TEMP/kyvernaut-repro-issue.json" \
+            --output-dir "$RUNNER_TEMP/kyvernaut-repro-plan" \
+            --run-id "$GITHUB_RUN_ID" \
+            --github-output "$GITHUB_OUTPUT"
+
+      - name: Upload immutable reproduction plan
+        if: steps.pause.outputs.paused != 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: kyvernaut-repro-plan-${{ github.event.issue.number || inputs.issue_number }}-${{ github.run_id }}
+          path: ${{ runner.temp }}/kyvernaut-repro-plan
+          retention-days: 30
+
+  execute:
+    name: Run isolated ephemeral reproduction
+    needs: plan
+    if: needs.plan.outputs.execution_authorized == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      actions: read
+      contents: read
+      issues: read
+    env:
+      KIND_NAME: kyvernaut-repro
+    steps:
+      - name: Recheck repository kill switch
+        id: pause
+        shell: bash
+        env:
+          PAUSE_VALUE: ${{ vars.KYVERNAUT_PAUSED }}
+        run: |
+          value="${PAUSE_VALUE//[[:space:]]/}"
+          value="${value,,}"
+          case "$value" in
+            1|true|yes|on) echo "paused=true" >> "$GITHUB_OUTPUT" ;;
+            *) echo "paused=false" >> "$GITHUB_OUTPUT" ;;
+          esac
+
+      - name: Checkout exact trusted workflow commit
+        if: steps.pause.outputs.paused != 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Download authorized plan
+        if: steps.pause.outputs.paused != 'true'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: kyvernaut-repro-plan-${{ github.event.issue.number || inputs.issue_number }}-${{ github.run_id }}
+          path: ${{ runner.temp }}/kyvernaut-repro-plan
+
+      - name: Set up sandbox Python
+        if: steps.pause.outputs.paused != 'true'
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: kyvernaut/requirements-runtime.txt
+
+      - name: Install sandbox hash-locked runtime dependency
+        if: steps.pause.outputs.paused != 'true'
+        run: >-
+          python -m pip install
+          --only-binary=:all:
+          --require-hashes
+          --requirement kyvernaut/requirements-runtime.txt
+
+      - name: Initialize reproduction result audit
+        if: steps.pause.outputs.paused != 'true'
+        run: |
+          python kyvernaut/repro_execute.py \
+            --plan "$RUNNER_TEMP/kyvernaut-repro-plan/repro-plan.json" \
+            --output-dir "$RUNNER_TEMP/kyvernaut-repro-result" \
+            --initialize-only
+
+      - name: Install trusted build tools
+        if: steps.pause.outputs.paused != 'true'
+        uses: ./.github/actions/go/install
+
+      - name: Install trusted cluster tools
+        if: steps.pause.outputs.paused != 'true'
+        uses: ./.github/actions/tools/install
+        with:
+          helm: true
+          kind: true
+          ko: true
+
+      - name: Create ephemeral KinD cluster
+        if: steps.pause.outputs.paused != 'true'
+        uses: helm/kind-action@ef37e7f390d99f746eb8b610417061a60e82a6cc # v1.14.0
+        with:
+          node_image: kindest/node:v1.35.1
+          cluster_name: kyvernaut-repro
+          config: ./scripts/config/kind/default.yaml
+
+      - name: Build and install trusted default-branch Kyverno
+        if: steps.pause.outputs.paused != 'true'
+        timeout-minutes: 30
+        run: |
+          make kind-load-all
+          make kind-install-kyverno
+          kubectl wait \
+            --namespace kyverno \
+            --for=condition=ready pod \
+            --selector '!job-name' \
+            --timeout=120s
+
+      - name: Preload allowlisted workload images
+        if: steps.pause.outputs.paused != 'true'
+        timeout-minutes: 5
+        run: |
+          for image in nginx:latest busybox:latest registry.k8s.io/pause:3.10; do
+            docker pull "$image"
+            kind load docker-image "$image" --name "$KIND_NAME"
+          done
+
+      - name: Deny cluster network egress
+        if: steps.pause.outputs.paused != 'true'
+        id: egress
+        shell: bash
+        run: |
+          subnet="$(docker network inspect kind --format '{{range .IPAM.Config}}{{println .Subnet}}{{end}}' | sed -n '/^[0-9].*\\//{p;q;}')"
+          if [[ ! "$subnet" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/[0-9]+$ ]]; then
+            echo "Unable to identify the KinD IPv4 subnet." >&2
+            exit 1
+          fi
+          sudo iptables --wait -I DOCKER-USER 1 \
+            -s "$subnet" -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+          sudo iptables --wait -I DOCKER-USER 2 \
+            -s "$subnet" ! -d "$subnet" -j REJECT
+          echo "subnet=$subnet" >> "$GITHUB_OUTPUT"
+          docker exec kyvernaut-repro-control-plane sh -c 'command -v curl >/dev/null'
+          if docker exec kyvernaut-repro-control-plane \
+            curl --silent --show-error --fail --max-time 5 https://example.com; then
+            echo "KinD egress verification unexpectedly succeeded." >&2
+            exit 1
+          fi
+
+      - name: Refetch issue immediately before execution
+        if: steps.pause.outputs.paused != 'true'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          ISSUE_JSON: ${{ runner.temp }}/kyvernaut-repro-current-issue.json
+          ISSUE_NUMBER: ${{ github.event.issue.number || inputs.issue_number }}
+        with:
+          script: |
+            const fs = require("fs");
+            const issue_number = Number.parseInt(process.env.ISSUE_NUMBER, 10);
+            const response = await github.rest.issues.get({
+              ...context.repo,
+              issue_number,
+            });
+            if (response.data.pull_request) {
+              core.setFailed("reproduction accepts issues, not pull requests");
+              return;
+            }
+            fs.writeFileSync(process.env.ISSUE_JSON, JSON.stringify(response.data));
+
+      - name: Revalidate approval and exact manifest bundle
+        if: steps.pause.outputs.paused != 'true'
+        env:
+          KYVERNAUT_PAUSED: ${{ vars.KYVERNAUT_PAUSED }}
+        run: |
+          python kyvernaut/repro_plan.py \
+            --issue "$RUNNER_TEMP/kyvernaut-repro-current-issue.json" \
+            --output-dir "$RUNNER_TEMP/kyvernaut-repro-revalidated" \
+            --run-id "$GITHUB_RUN_ID"
+          cmp --silent \
+            "$RUNNER_TEMP/kyvernaut-repro-plan/repro-plan.json" \
+            "$RUNNER_TEMP/kyvernaut-repro-revalidated/repro-plan.json"
+          cmp --silent \
+            "$RUNNER_TEMP/kyvernaut-repro-plan/sanitized-manifests.yaml" \
+            "$RUNNER_TEMP/kyvernaut-repro-revalidated/sanitized-manifests.yaml"
+
+      - name: Apply sanitized manifests and capture observations
+        if: steps.pause.outputs.paused != 'true'
+        id: reproduce
+        continue-on-error: true
+        timeout-minutes: 5
+        env:
+          GITHUB_TOKEN: ""
+          GH_TOKEN: ""
+          AWS_ACCESS_KEY_ID: ""
+          AWS_SECRET_ACCESS_KEY: ""
+          AWS_SESSION_TOKEN: ""
+          AZURE_CLIENT_ID: ""
+          AZURE_CLIENT_SECRET: ""
+          GOOGLE_APPLICATION_CREDENTIALS: ""
+        run: |
+          python kyvernaut/repro_execute.py \
+            --plan "$RUNNER_TEMP/kyvernaut-repro-plan/repro-plan.json" \
+            --manifests "$RUNNER_TEMP/kyvernaut-repro-plan/sanitized-manifests.yaml" \
+            --output-dir "$RUNNER_TEMP/kyvernaut-repro-result" \
+            --github-output "$GITHUB_OUTPUT"
+
+      - name: Remove egress rule and delete cluster
+        if: always() && steps.pause.outputs.paused != 'true'
+        shell: bash
+        env:
+          KIND_SUBNET: ${{ steps.egress.outputs.subnet }}
+        run: |
+          if [ -z "$KIND_SUBNET" ] && docker network inspect kind >/dev/null 2>&1; then
+            KIND_SUBNET="$(docker network inspect kind --format '{{range .IPAM.Config}}{{println .Subnet}}{{end}}' | sed -n '/^[0-9].*\\//{p;q;}')"
+          fi
+          if [ -n "$KIND_SUBNET" ]; then
+            sudo iptables --wait -D DOCKER-USER -s "$KIND_SUBNET" ! -d "$KIND_SUBNET" -j REJECT || true
+            sudo iptables --wait -D DOCKER-USER \
+              -s "$KIND_SUBNET" -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT || true
+          fi
+          kind delete cluster --name "$KIND_NAME" || true
+
+      - name: Upload immutable reproduction result
+        if: always() && steps.pause.outputs.paused != 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: kyvernaut-repro-result-${{ github.event.issue.number || inputs.issue_number }}-${{ github.run_id }}
+          path: ${{ runner.temp }}/kyvernaut-repro-result
+          retention-days: 30
+
+      - name: Fail after preserving infrastructure errors
+        if: steps.reproduce.outcome == 'failure'
+        run: |
+          echo "The reproduction runner failed; its audit artifact was preserved." >&2
+          exit 1
+
+  report:
+    name: Publish reproduction result
+    needs: [plan, execute]
+    if: always() && needs.plan.outputs.execution_authorized == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: read
+      issues: write
+    steps:
+      - name: Recheck repository kill switch
+        id: pause
+        shell: bash
+        env:
+          PAUSE_VALUE: ${{ vars.KYVERNAUT_PAUSED }}
+        run: |
+          value="${PAUSE_VALUE//[[:space:]]/}"
+          value="${value,,}"
+          case "$value" in
+            1|true|yes|on) echo "paused=true" >> "$GITHUB_OUTPUT" ;;
+            *) echo "paused=false" >> "$GITHUB_OUTPUT" ;;
+          esac
+
+      - name: Download reproduction result
+        if: steps.pause.outputs.paused != 'true'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: kyvernaut-repro-result-${{ github.event.issue.number || inputs.issue_number }}-${{ github.run_id }}
+          path: ${{ runner.temp }}/kyvernaut-repro-result
+
+      - name: Create or update audited issue comment
+        if: steps.pause.outputs.paused != 'true'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number || inputs.issue_number }}
+          RESULT_JSON: ${{ runner.temp }}/kyvernaut-repro-result/repro-result.json
+        with:
+          script: |
+            const fs = require("fs");
+            const issue_number = Number.parseInt(process.env.ISSUE_NUMBER, 10);
+            const result = JSON.parse(fs.readFileSync(process.env.RESULT_JSON, "utf8"));
+            const marker = "<!-- kyvernaut:reproduction:v1 -->";
+            const applyResults = Array.isArray(result.apply_results) ? result.apply_results : [];
+            const accepted = applyResults.filter((item) => item.accepted).length;
+            const rejected = applyResults.length - accepted;
+            const runUrl =
+              `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}` +
+              `/actions/runs/${context.runId}`;
+            const outcome = ["completed", "infrastructure_failure"].includes(result.outcome)
+              ? result.outcome
+              : "invalid-result";
+            const decisionId = /^[0-9a-f]{20}$/.test(result.decision_id || "")
+              ? result.decision_id
+              : "unavailable";
+            const body = [
+              marker,
+              "## Kyvernaut reproduction result",
+              "",
+              `- Outcome: **${outcome}**`,
+              `- Manifests accepted by the API server: **${accepted}**`,
+              `- Manifests rejected by the API server: **${rejected}**`,
+              `- Decision ID: \`${decisionId}\``,
+              "",
+              "The expected-behavior statement, per-document API responses, events,",
+              "policy reports, resource snapshots, and bounded Kyverno logs are retained",
+              `in the [audit run](${runUrl}). A maintainer must interpret whether the`,
+              "captured behavior confirms the report.",
+            ].join("\n");
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              ...context.repo,
+              issue_number,
+              per_page: 100,
+            });
+            const existing = comments.find((comment) =>
+              comment.user?.login === "github-actions[bot]" &&
+              comment.body?.includes(marker)
+            );
+            if (existing) {
+              await github.rest.issues.updateComment({
+                ...context.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                ...context.repo,
+                issue_number,
+                body,
+              });
+            }
