@@ -487,6 +487,30 @@ kind/codegen:
             - scripts/**
             - cmd/tools/**
 
+kind/api-change:
+  color: B60205
+  description: Changes a published API surface and requires compatibility review
+  rules:
+    - changed-files:
+        - any-glob-to-any-file:
+            - api/**
+
+change/docs-only:
+  color: CE93D8
+  description: Every changed file is documentation
+
+change/generated-only:
+  color: 8E24AA
+  description: Every changed file is generated output
+
+change/breaking-api:
+  color: B60205
+  description: Maintainers confirmed the API change is breaking
+
+change/non-breaking-api:
+  color: 0E8A16
+  description: Maintainers confirmed the API change is backward compatible
+
 # ── Kind: Dependencies (brown #795548) ──────────────────────────────────────
 kind/dependencies:
   color: "795548"

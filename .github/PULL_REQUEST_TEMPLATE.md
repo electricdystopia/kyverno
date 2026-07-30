@@ -47,6 +47,26 @@ My PR contains new or altered behavior to Kyverno.
 > /kind feature
 -->
 
+### Structured change metadata
+
+<!--
+Kyvernaut derives docs-only, generated-only, and API scope from the complete
+changed-file list. The corresponding stable labels are:
+
+- `change/docs-only`
+- `change/generated-only`
+- `kind/api-change`
+
+For every API change, ask a maintainer to apply exactly one compatibility
+label after review:
+
+- `change/breaking-api`
+- `change/non-breaking-api`
+
+These labels are mutually exclusive. They are repository metadata consumed by
+automation, not a replacement for explaining compatibility impact below.
+-->
+
 ## Proposed Changes
 
 <!--

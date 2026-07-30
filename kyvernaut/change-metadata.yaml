@@ -1,0 +1,36 @@
+version: 1
+
+classifications:
+  documentation_only:
+    label: change/docs-only
+    strategy: all-paths
+    paths:
+      - "*.md"
+      - "**/*.md"
+      - docs/**
+  generated_only:
+    label: change/generated-only
+    strategy: all-paths
+    paths:
+      - "**/zz_generated.*"
+      - api/**/zz_generated.*
+      - charts/**/crds/**
+      - cmd/cli/kubectl-kyverno/data/api-group-resources.json
+      - config/crds/**
+      - pkg/client/**
+  api_change:
+    label: kind/api-change
+    strategy: any-path
+    paths:
+      - api/**
+  breaking_api:
+    label: change/breaking-api
+    strategy: explicit-label
+  non_breaking_api:
+    label: change/non-breaking-api
+    strategy: explicit-label
+
+constraints:
+  api_change_requires_exactly_one:
+    - breaking_api
+    - non_breaking_api
