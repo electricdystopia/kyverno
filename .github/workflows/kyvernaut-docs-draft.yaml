@@ -1,0 +1,547 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+
+name: Kyvernaut documentation draft
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_pr_number:
+        description: Open, non-draft kyverno/kyverno PR that still needs documentation
+        required: true
+        type: string
+      website_path:
+        description: Exact Markdown path below src/content/docs/docs/
+        required: true
+        type: string
+      website_content:
+        description: Complete maintainer-supplied Markdown draft with YAML frontmatter
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: kyvernaut-docs-draft-${{ inputs.source_pr_number }}
+  cancel-in-progress: false
+
+jobs:
+  draft:
+    name: Plan and create a guarded website draft PR
+    if: github.ref_name == github.event.repository.default_branch
+    environment: kyvernaut-website
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check repository kill switch
+        id: pause
+        shell: bash
+        env:
+          PAUSE_VALUE: ${{ vars.KYVERNAUT_PAUSED }}
+        run: |
+          value="${PAUSE_VALUE//[[:space:]]/}"
+          value="${value,,}"
+          case "$value" in
+            1|true|yes|on) echo "paused=true" >> "$GITHUB_OUTPUT" ;;
+            *) echo "paused=false" >> "$GITHUB_OUTPUT" ;;
+          esac
+
+      - name: Checkout exact trusted default-branch commit
+        if: steps.pause.outputs.paused != 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Set up planner Python
+        if: steps.pause.outputs.paused != 'true'
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: kyvernaut/requirements-runtime.txt
+
+      - name: Install hash-locked planner dependency
+        if: steps.pause.outputs.paused != 'true'
+        run: >-
+          python -m pip install
+          --only-binary=:all:
+          --require-hashes
+          --requirement kyvernaut/requirements-runtime.txt
+
+      - name: Collect immutable source and website evidence
+        if: steps.pause.outputs.paused != 'true'
+        id: evidence
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          SOURCE_PR_NUMBER: ${{ inputs.source_pr_number }}
+          WEBSITE_PATH: ${{ inputs.website_path }}
+          EVIDENCE_DIR: ${{ runner.temp }}/kyvernaut-docs-draft
+        with:
+          script: |
+            const fs = require("fs");
+            const path = require("path");
+            const crypto = require("crypto");
+            const prNumberText = process.env.SOURCE_PR_NUMBER;
+            if (!/^[1-9][0-9]*$/.test(prNumberText)) {
+              core.setFailed("source_pr_number must be a positive integer");
+              return;
+            }
+            const prNumber = Number(prNumberText);
+            const evidenceDir = process.env.EVIDENCE_DIR;
+            fs.mkdirSync(evidenceDir, { recursive: true });
+
+            const permissionResponse = await github.rest.repos.getCollaboratorPermissionLevel({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              username: context.actor,
+            });
+            const actorPermission = permissionResponse.data.permission;
+            core.setOutput("actor_permission", actorPermission);
+
+            const prResponse = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+            });
+            const pr = prResponse.data;
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+              per_page: 100,
+            });
+            if (files.length !== pr.changed_files) {
+              core.setFailed(
+                `GitHub returned ${files.length} files but PR reports ${pr.changed_files}`
+              );
+              return;
+            }
+            const changedFiles = files.map((file) => file.filename).sort();
+            const sourceEvent = {
+              repository: { full_name: context.payload.repository.full_name },
+              pull_request: pr,
+            };
+            fs.writeFileSync(
+              path.join(evidenceDir, "source-event.json"),
+              JSON.stringify(sourceEvent, null, 2) + "\n"
+            );
+            fs.writeFileSync(
+              path.join(evidenceDir, "changed-files.json"),
+              JSON.stringify(changedFiles, null, 2) + "\n"
+            );
+
+            const targetOwner = "kyverno";
+            const targetRepo = "website";
+            const repository = await github.rest.repos.get({
+              owner: targetOwner,
+              repo: targetRepo,
+            });
+            const defaultBranch = repository.data.default_branch;
+            const base = await github.rest.git.getRef({
+              owner: targetOwner,
+              repo: targetRepo,
+              ref: `heads/${defaultBranch}`,
+            });
+            let file = { exists: false, sha: null, content_sha256: null };
+            try {
+              const response = await github.rest.repos.getContent({
+                owner: targetOwner,
+                repo: targetRepo,
+                path: process.env.WEBSITE_PATH,
+                ref: base.data.object.sha,
+              });
+              if (Array.isArray(response.data) || response.data.type !== "file") {
+                core.setFailed("website target is not a regular file");
+                return;
+              }
+              const bytes = Buffer.from(
+                String(response.data.content).replace(/\n/g, ""),
+                response.data.encoding
+              );
+              file = {
+                exists: true,
+                sha: response.data.sha,
+                content_sha256: crypto.createHash("sha256").update(bytes).digest("hex"),
+              };
+            } catch (error) {
+              if (error.status !== 404) throw error;
+            }
+            fs.writeFileSync(
+              path.join(evidenceDir, "target-snapshot.json"),
+              JSON.stringify(
+                {
+                  repository: `${targetOwner}/${targetRepo}`,
+                  default_branch: defaultBranch,
+                  base_sha: base.data.object.sha,
+                  file,
+                },
+                null,
+                2
+              ) + "\n"
+            );
+
+      - name: Compile documentation draft decision
+        if: steps.pause.outputs.paused != 'true'
+        id: plan
+        env:
+          WEBSITE_PATH_INPUT: ${{ inputs.website_path }}
+          WEBSITE_CONTENT_INPUT: ${{ inputs.website_content }}
+          KYVERNAUT_PAUSED: ${{ vars.KYVERNAUT_PAUSED }}
+        run: |
+          python kyvernaut/docs_draft.py \
+            --event "$RUNNER_TEMP/kyvernaut-docs-draft/source-event.json" \
+            --changed-files "$RUNNER_TEMP/kyvernaut-docs-draft/changed-files.json" \
+            --target-snapshot "$RUNNER_TEMP/kyvernaut-docs-draft/target-snapshot.json" \
+            --website-path-env WEBSITE_PATH_INPUT \
+            --content-env WEBSITE_CONTENT_INPUT \
+            --actor-permission "${{ steps.evidence.outputs.actor_permission }}" \
+            --run-id "${{ github.run_id }}" \
+            --output-dir "$RUNNER_TEMP/kyvernaut-docs-draft" \
+            --github-output "$GITHUB_OUTPUT"
+
+      - name: Revalidate source and website immediately before mutation
+        if: >-
+          steps.pause.outputs.paused != 'true' &&
+          steps.plan.outputs.action_authorized == 'true'
+        id: revalidate
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          PLAN_PATH: ${{ runner.temp }}/kyvernaut-docs-draft/docs-draft-decision.json
+          WEBSITE_CONTENT: ${{ inputs.website_content }}
+        with:
+          script: |
+            const fs = require("fs");
+            const crypto = require("crypto");
+            const plan = JSON.parse(fs.readFileSync(process.env.PLAN_PATH, "utf8"));
+            const action = plan.action;
+            const evidence = plan.evidence;
+            if (!action.action_authorized || plan.blockers.length !== 0) {
+              core.setFailed("decision does not authorize a website mutation");
+              return;
+            }
+            const contentHash = crypto
+              .createHash("sha256")
+              .update(process.env.WEBSITE_CONTENT, "utf8")
+              .digest("hex");
+            if (contentHash !== action.content_sha256) {
+              core.setFailed("website content changed after planning");
+              return;
+            }
+
+            const permission = await github.rest.repos.getCollaboratorPermissionLevel({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              username: context.actor,
+            });
+            if (!["admin", "maintain", "write"].includes(permission.data.permission)) {
+              core.setFailed("dispatcher no longer has write-level permission");
+              return;
+            }
+            const prResponse = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: evidence.source_pr_number,
+            });
+            const pr = prResponse.data;
+            const labels = pr.labels.map((label) => label.name).sort();
+            const titleHash = crypto.createHash("sha256").update(pr.title || "").digest("hex");
+            const bodyHash = crypto.createHash("sha256").update(pr.body || "").digest("hex");
+            if (
+              pr.state !== evidence.source_state ||
+              Boolean(pr.draft) !== evidence.source_draft ||
+              pr.base.ref !== evidence.source_base_ref ||
+              pr.head.sha !== evidence.source_head_sha ||
+              titleHash !== evidence.source_title_sha256 ||
+              bodyHash !== evidence.source_body_sha256 ||
+              JSON.stringify(labels) !== JSON.stringify(evidence.source_labels)
+            ) {
+              core.setFailed("source PR evidence changed after planning");
+              return;
+            }
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: evidence.source_pr_number,
+              per_page: 100,
+            });
+            if (files.length !== pr.changed_files) {
+              core.setFailed("source changed-file evidence is incomplete");
+              return;
+            }
+            const changedFiles = files.map((file) => file.filename).sort();
+            const changedFilesHash = crypto
+              .createHash("sha256")
+              .update(JSON.stringify(changedFiles))
+              .digest("hex");
+            if (changedFilesHash !== evidence.changed_files_sha256) {
+              core.setFailed("source changed-file evidence changed after planning");
+              return;
+            }
+
+            const [targetOwner, targetRepo] = action.target_repository.split("/");
+            const repository = await github.rest.repos.get({
+              owner: targetOwner,
+              repo: targetRepo,
+            });
+            if (repository.data.default_branch !== action.target_base_branch) {
+              core.setFailed("website default branch changed after planning");
+              return;
+            }
+            const base = await github.rest.git.getRef({
+              owner: targetOwner,
+              repo: targetRepo,
+              ref: `heads/${action.target_base_branch}`,
+            });
+            if (base.data.object.sha !== action.target_base_sha) {
+              core.setFailed("website base advanced after planning; dispatch a fresh plan");
+              return;
+            }
+            let targetSha = null;
+            let targetContentHash = null;
+            try {
+              const response = await github.rest.repos.getContent({
+                owner: targetOwner,
+                repo: targetRepo,
+                path: action.target_path,
+                ref: action.target_base_sha,
+              });
+              if (Array.isArray(response.data) || response.data.type !== "file") {
+                core.setFailed("website target is no longer a regular file");
+                return;
+              }
+              targetSha = response.data.sha;
+              targetContentHash = crypto
+                .createHash("sha256")
+                .update(
+                  Buffer.from(
+                    String(response.data.content).replace(/\n/g, ""),
+                    response.data.encoding
+                  )
+                )
+                .digest("hex");
+            } catch (error) {
+              if (error.status !== 404) throw error;
+            }
+            if (
+              targetSha !== action.expected_target_file_sha ||
+              targetContentHash !== action.expected_target_content_sha256
+            ) {
+              core.setFailed("website target changed after planning");
+              return;
+            }
+            core.setOutput("authorized", "true");
+
+      - name: Create website-scoped GitHub App token
+        if: >-
+          steps.pause.outputs.paused != 'true' &&
+          steps.revalidate.outputs.authorized == 'true'
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
+        with:
+          client-id: ${{ vars.KYVERNAUT_WEBSITE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.KYVERNAUT_WEBSITE_APP_PRIVATE_KEY }}
+          owner: kyverno
+          repositories: website
+          permission-contents: write
+          permission-pull-requests: write
+
+      - name: Revalidate target and create one draft pull request
+        if: >-
+          steps.pause.outputs.paused != 'true' &&
+          steps.revalidate.outputs.authorized == 'true'
+        id: execute
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          PLAN_PATH: ${{ runner.temp }}/kyvernaut-docs-draft/docs-draft-decision.json
+          WEBSITE_CONTENT: ${{ inputs.website_content }}
+          OUTCOME_PATH: ${{ runner.temp }}/kyvernaut-docs-draft/docs-draft-execution.json
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          script: |
+            const fs = require("fs");
+            const crypto = require("crypto");
+            const plan = JSON.parse(fs.readFileSync(process.env.PLAN_PATH, "utf8"));
+            const action = plan.action;
+            const content = process.env.WEBSITE_CONTENT;
+            const outcome = {
+              schema_version: 1,
+              decision_id: plan.decision_id,
+              target_repository: action.target_repository,
+              target_branch: action.branch,
+              target_path: action.target_path,
+              status: "not_started",
+              pull_request_number: null,
+              pull_request_url: null,
+              error: null,
+            };
+            try {
+              const contentHash = crypto
+                .createHash("sha256")
+                .update(content, "utf8")
+                .digest("hex");
+              if (
+                !action.action_authorized ||
+                plan.blockers.length !== 0 ||
+                contentHash !== action.content_sha256 ||
+                action.draft !== true
+              ) {
+                throw new Error("plan or content does not authorize this mutation");
+              }
+              const [owner, repo] = action.target_repository.split("/");
+              const base = await github.rest.git.getRef({
+                owner,
+                repo,
+                ref: `heads/${action.target_base_branch}`,
+              });
+              if (base.data.object.sha !== action.target_base_sha) {
+                throw new Error("website base changed immediately before mutation");
+              }
+
+              let currentSha = null;
+              let currentContentHash = null;
+              try {
+                const response = await github.rest.repos.getContent({
+                  owner,
+                  repo,
+                  path: action.target_path,
+                  ref: action.target_base_sha,
+                });
+                if (Array.isArray(response.data) || response.data.type !== "file") {
+                  throw new Error("website target is not a regular file");
+                }
+                currentSha = response.data.sha;
+                currentContentHash = crypto
+                  .createHash("sha256")
+                  .update(
+                    Buffer.from(
+                      String(response.data.content).replace(/\n/g, ""),
+                      response.data.encoding
+                    )
+                  )
+                  .digest("hex");
+              } catch (error) {
+                if (error.status !== 404) throw error;
+              }
+              if (
+                currentSha !== action.expected_target_file_sha ||
+                currentContentHash !== action.expected_target_content_sha256
+              ) {
+                throw new Error("website target changed immediately before mutation");
+              }
+
+              let branchSha = null;
+              try {
+                const branch = await github.rest.git.getRef({
+                  owner,
+                  repo,
+                  ref: `heads/${action.branch}`,
+                });
+                branchSha = branch.data.object.sha;
+              } catch (error) {
+                if (error.status !== 404) throw error;
+                await github.rest.git.createRef({
+                  owner,
+                  repo,
+                  ref: `refs/heads/${action.branch}`,
+                  sha: action.target_base_sha,
+                });
+                branchSha = action.target_base_sha;
+              }
+
+              let branchHasRequestedContent = false;
+              try {
+                const response = await github.rest.repos.getContent({
+                  owner,
+                  repo,
+                  path: action.target_path,
+                  ref: action.branch,
+                });
+                if (Array.isArray(response.data) || response.data.type !== "file") {
+                  throw new Error("draft branch target is not a regular file");
+                }
+                const branchContentHash = crypto
+                  .createHash("sha256")
+                  .update(
+                    Buffer.from(
+                      String(response.data.content).replace(/\n/g, ""),
+                      response.data.encoding
+                    )
+                  )
+                  .digest("hex");
+                branchHasRequestedContent = branchContentHash === action.content_sha256;
+              } catch (error) {
+                if (error.status !== 404) throw error;
+              }
+              if (!branchHasRequestedContent) {
+                if (branchSha !== action.target_base_sha) {
+                  throw new Error("existing draft branch has unexpected content");
+                }
+                const request = {
+                  owner,
+                  repo,
+                  path: action.target_path,
+                  message: action.commit_message,
+                  content: Buffer.from(content, "utf8").toString("base64"),
+                  branch: action.branch,
+                };
+                if (action.expected_target_file_sha !== null) {
+                  request.sha = action.expected_target_file_sha;
+                }
+                await github.rest.repos.createOrUpdateFileContents(request);
+              }
+
+              const existing = await github.paginate(github.rest.pulls.list, {
+                owner,
+                repo,
+                state: "all",
+                head: `${owner}:${action.branch}`,
+                base: action.target_base_branch,
+                per_page: 100,
+              });
+              let pull;
+              if (existing.length > 1) {
+                throw new Error("multiple open pull requests use the deterministic draft branch");
+              } else if (existing.length === 1) {
+                pull = existing[0];
+                if (pull.state !== "open") {
+                  throw new Error("deterministic draft branch was already used by a closed pull request");
+                }
+                if (!pull.draft) {
+                  throw new Error("existing pull request is no longer a draft");
+                }
+                outcome.status = "already_exists";
+              } else {
+                const response = await github.rest.pulls.create({
+                  owner,
+                  repo,
+                  head: action.branch,
+                  base: action.target_base_branch,
+                  title: action.pull_request_title,
+                  body: action.pull_request_body,
+                  draft: true,
+                });
+                pull = response.data;
+                outcome.status = "created";
+              }
+              outcome.pull_request_number = pull.number;
+              outcome.pull_request_url = pull.html_url;
+            } catch (error) {
+              outcome.status = "failed";
+              outcome.error = String(error.message || error);
+              core.setFailed(outcome.error);
+            } finally {
+              fs.writeFileSync(
+                process.env.OUTCOME_PATH,
+                JSON.stringify(outcome, null, 2) + "\n"
+              );
+            }
+
+      - name: Upload immutable documentation draft audit
+        if: always() && steps.pause.outputs.paused != 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: kyvernaut-docs-draft-${{ github.run_id }}
+          path: ${{ runner.temp }}/kyvernaut-docs-draft
+          retention-days: 90

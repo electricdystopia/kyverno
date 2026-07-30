@@ -32,7 +32,7 @@ history. The checked-in policy intentionally remains `shadow`.
 | Isolated issue reproduction | Implemented, separately disabled | Static planner, three permission-separated jobs, KinD sandbox, egress/quota/teardown controls |
 | API codegen/verify gate | Existing authoritative workflow | `.github/workflows/check-codegen.yaml` runs generation and verification; Kyvernaut flags when required |
 | Documentation-impact identification | Implemented | `docs_requirement.py` and PR advisor evidence |
-| Draft documentation PR | Not implemented | Target is `kyverno/website`; requires reviewed cross-repository app permissions and an approved content-generation/mapping policy |
+| Draft documentation PR | Implemented, dormant | Manual supplied-content planner plus revalidating `kyverno/website` App executor; needs App/ruleset/DCO/path-contract review and activation drills |
 | Slack/Discussions grounded Q&A | Retrieval foundation only (stretch) | Repository-only cited retrieval and escalation exist; no Slack/Discussions webhook, relevant issue/PR retrieval, synthesis, or write token |
 
 ## Evidence commands

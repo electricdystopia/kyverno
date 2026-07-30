@@ -3,9 +3,11 @@
 This directory contains Kyvernaut's Phase 0–4 foundations: repository safety
 metadata, a diff-to-test-scope mapper, dependency PR decisions and a dormant
 merge executor, PR hygiene, issue triage, and a dormant isolated reproduction
-harness, plus retrieval-only documentation Q&A. The checked-in policy remains
-in `shadow` mode with reproduction separately disabled, so the system can be
-evaluated without authorizing dependency merges or issue-manifest execution.
+harness, a dormant cross-repository documentation draft workflow, plus
+retrieval-only documentation Q&A. The checked-in policy remains in `shadow`
+mode with reproduction and documentation drafts separately disabled, so the
+system can be evaluated without authorizing dependency merges,
+issue-manifest execution, or website writes.
 
 The decisions are deterministic and auditable rather than opaque model
 judgments. Risk tiers and human-review flags encode repository structure and
@@ -66,6 +68,13 @@ only trusted default-branch code.
 - `docs_requirement.py` — detects user-facing diffs without an in-repo docs
   change, `kyverno/website` issue/PR link, or reviewed exemption and includes
   the result in the PR advisory artifact/comment.
+- `docs_draft.py` and
+  `.github/workflows/kyvernaut-docs-draft.yaml` — a manual, dormant planner
+  and cross-repository executor for one draft `kyverno/website` PR. A
+  write-authorized maintainer supplies the exact Markdown path and complete
+  content; source and target evidence are revalidated before a
+  website-scoped GitHub App token can create the deterministic branch,
+  signed-off commit, and draft PR.
 - `qa-sources.yaml`, `qa_retrieval.py`, and
   `.github/workflows/kyvernaut-docs-qa.yaml` — a bounded, retrieval-only
   Phase 4 foundation over reviewed repository Markdown. It emits exact
@@ -201,9 +210,25 @@ this.
 Kyverno's existing `Codegen` workflow remains the blocking source of truth
 for `make codegen-all-code`, documentation generation, and
 `make verify-codegen`. Kyvernaut consumes codegen risk metadata but does not
-create a redundant gate. Documentation-impact detection is advisory because
-the current token is intentionally unable to open a cross-repository
-website PR.
+create a redundant gate.
+
+Documentation-impact detection remains advisory during ordinary PR events.
+The separate documentation draft workflow is manual and dormant. It runs
+trusted default-branch code with a read-only workflow token, requires global
+active mode plus `documentation.draft_pull_requests.enabled: true`, and
+accepts only canonical `.md` content under the reviewed website root
+`src/content/docs/docs/`. Kyvernaut does not synthesize prose from PR text:
+a source-repository writer supplies the complete content as data. The planner
+binds the source PR head, title/body hashes, labels, complete changed-file
+list, website base SHA, existing target blob, path, and content hash.
+
+Immediately before mutation it rechecks the dispatcher's permission and both
+repositories. Only then is a short-lived GitHub App token requested, scoped
+to `kyverno/website` with `contents:write` and `pull-requests:write`. The
+executor rechecks the website base and target again, creates at most one
+deterministic branch/commit/draft PR, and treats an identical partial retry
+idempotently. It cannot merge, mark the PR ready, write release branches, or
+change the source PR. Website CI and maintainer review remain authoritative.
 
 ## Demo: three real commits from `kyverno/kyverno` main
 
@@ -371,4 +396,7 @@ python3 -m pytest kyvernaut -q
 - **Phase 4:** evaluate the implemented retrieval-only, citation-required
   docs index on a maintainer-curated question set. Add synthesis only after
   measuring citation correctness and escalation quality; connect Slack or
-  Discussions write access only after a separate permission review.
+  Discussions write access only after a separate permission review. Review
+  the dormant website App installation, supplied-content policy, DCO
+  identity, Astro path contract, and rollback drill before separately
+  enabling documentation drafts.

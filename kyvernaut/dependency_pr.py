@@ -304,9 +304,77 @@ def validate_config(config: dict) -> list[str]:
         values = documentation.get(field)
         if not isinstance(values, list) or not values or not all(isinstance(value, str) and value for value in values):
             errors.append(f"documentation.{field} must be a non-empty string list")
+    source_repository = documentation.get("source_repository")
+    if source_repository != "kyverno/kyverno":
+        errors.append("documentation.source_repository must be kyverno/kyverno")
     repository = documentation.get("website_repository")
-    if not isinstance(repository, str) or repository.count("/") != 1:
-        errors.append("documentation.website_repository must be an owner/repository string")
+    if repository != "kyverno/website":
+        errors.append("documentation.website_repository must be kyverno/website")
+    drafts = documentation.get("draft_pull_requests")
+    if not isinstance(drafts, dict):
+        return errors + ["documentation.draft_pull_requests must be a mapping"]
+    if not isinstance(drafts.get("enabled"), bool):
+        errors.append("documentation.draft_pull_requests.enabled must be a boolean")
+    if drafts.get("target_base_branch") != "main":
+        errors.append("documentation.draft_pull_requests.target_base_branch must be main")
+    content_root = drafts.get("content_root")
+    if (
+        not isinstance(content_root, str)
+        or not content_root.endswith("/")
+        or content_root.startswith("/")
+        or ".." in content_root.split("/")
+    ):
+        errors.append(
+            "documentation.draft_pull_requests.content_root must be a safe relative directory"
+        )
+    extensions = drafts.get("allowed_extensions")
+    if extensions != [".md"]:
+        errors.append(
+            "documentation.draft_pull_requests.allowed_extensions must be [.md]"
+        )
+    for field, maximum in (("max_content_bytes", 65536), ("max_changed_files", 3000)):
+        value = drafts.get(field)
+        if (
+            not isinstance(value, int)
+            or isinstance(value, bool)
+            or not 1 <= value <= maximum
+        ):
+            errors.append(
+                f"documentation.draft_pull_requests.{field} must be an integer "
+                f"from 1 through {maximum}"
+            )
+    branch_prefix = drafts.get("branch_prefix")
+    if (
+        not isinstance(branch_prefix, str)
+        or not re.fullmatch(r"[a-z0-9](?:[a-z0-9._/-]*[a-z0-9])?", branch_prefix)
+        or ".." in branch_prefix
+        or "//" in branch_prefix
+        or branch_prefix.startswith("/")
+        or branch_prefix.endswith("/")
+    ):
+        errors.append(
+            "documentation.draft_pull_requests.branch_prefix must be a safe Git ref prefix"
+        )
+    signoff = drafts.get("commit_signoff")
+    if not isinstance(signoff, dict):
+        errors.append(
+            "documentation.draft_pull_requests.commit_signoff must be a mapping"
+        )
+    else:
+        name = signoff.get("name")
+        email = signoff.get("email")
+        if not isinstance(name, str) or not name.strip() or "\n" in name:
+            errors.append(
+                "documentation.draft_pull_requests.commit_signoff.name must be a single-line string"
+            )
+        if (
+            not isinstance(email, str)
+            or not re.fullmatch(r"[^@\s]+@[^@\s]+", email)
+            or "\n" in email
+        ):
+            errors.append(
+                "documentation.draft_pull_requests.commit_signoff.email must be an email address"
+            )
     return errors
 
 

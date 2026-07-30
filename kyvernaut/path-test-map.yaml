@@ -337,7 +337,7 @@ rules:
     unit: []
     conformance: []
     risk: low
-    note: "Content-only; no code path exercises these. (Whether a code change *requires* a doc update is a separate, not-yet-built classifier — see 'doc-change PR drafting' in the deferred features.)"
+    note: "Content-only; no code path exercises these. Code-to-documentation impact and the separately dormant supplied-content website draft workflow are handled by docs_requirement.py and docs_draft.py."
 
   # ---- Fallback: any other pkg/<dir> not explicitly listed ----
   - id: pkg-fallback

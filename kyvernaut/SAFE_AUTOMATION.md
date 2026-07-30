@@ -31,6 +31,17 @@ but dormant executor: `mode: shadow` makes its action batch empty. Enabling
 the executor requires a reviewed repository configuration change to
 `mode: active`; editing a pull request cannot activate it.
 
+A second stateful boundary,
+`.github/workflows/kyvernaut-docs-draft.yaml`, is manual and doubly dormant:
+the global mode is `shadow` and
+`documentation.draft_pull_requests.enabled` is `false`. Its workflow token
+can only read the source repository. A short-lived GitHub App token is not
+created unless the pure planner authorizes the exact request and immediate
+revalidation succeeds. That App token is explicitly narrowed to
+`kyverno/website`, `contents:write`, and `pull-requests:write`; its credentials
+belong in the dedicated `kyvernaut-website` Actions environment, where
+maintainers can require deployment review.
+
 The workflow uses `pull_request_target` solely to post comments on fork PRs.
 Because that event has a write-capable token, it checks out and executes the
 default branch only. Pull-request code, actions, requirements, and scripts
@@ -130,6 +141,34 @@ generates no answer and requests human escalation. The manual workflow has
 `contents: read`, accepts the question through an environment variable as
 data, runs only on the default branch, and uploads an artifact without a Slack
 or Discussions write token.
+
+Documentation draft creation is separate from retrieval and ordinary PR
+advice. It accepts only a manual dispatch by a source-repository collaborator
+whose current permission is `write`, `maintain`, or `admin`. The maintainer
+must provide the exact target path and complete content; Kyvernaut does not
+execute or transform PR text into prose. The policy permits one LF-normalized,
+newline-terminated `.md` file below `src/content/docs/docs/`, capped at 32
+KiB, with valid YAML frontmatter and a non-empty title. `.mdx`, hidden paths,
+absolute paths, traversal, and paths outside the reviewed Astro/Starlight
+content root fail closed.
+
+The source PR must remain open, non-draft, targeted at `main`, user-facing,
+and still missing in-repository documentation, a website issue/PR link, or a
+reviewed exemption. Planning binds the source head SHA, title/body hashes,
+labels, complete changed-file list, dispatcher permission, website default
+branch and base SHA, existing target blob/content hash, requested path, and
+supplied-content hash. The read-only workflow token revalidates all of that
+before requesting the App token.
+
+The App-backed executor then rechecks the website base and target immediately
+before its first write. It may create one deterministic branch from the exact
+authorized `main` SHA, one signed-off file commit, and one draft pull request.
+It cannot merge, mark a PR ready, update arbitrary branches, modify more than
+one file, or mutate `kyverno/kyverno`. Deterministic branch naming makes an
+identical retry idempotent; unexpected pre-existing branch content is a hard
+stop. Any website `main` advance or target-file change requires a fresh
+dispatch and plan.
+
 Reproduction starts when a maintainer applies the fixed
 `kyvernaut:repro-approved` label or manually dispatches the workflow, and is
 separately disabled in the checked-in configuration. Other label events
@@ -193,6 +232,8 @@ mode, evidence, and blockers. Workflow artifacts retain:
 - `issue-triage-decision.json` and, when label execution was attempted,
   `issue-triage-execution.json`;
 - documentation retrieval `qa-result.json` and `answer.md`;
+- documentation draft `docs-draft-decision.json` and, if the App-backed
+  executor ran, `docs-draft-execution.json`;
 - reproduction `repro-plan.json`, exact sanitized bundle,
   `repro-result.json`, resource/policy/report/event snapshots, and bounded
   controller logs;
@@ -248,6 +289,11 @@ permission and mutation surface can be reviewed. Maintainers must not switch
 8. For issue reproduction: maintainer review and live drills of the
    implemented credential isolation, egress denial, CPU/memory/count/time
    quotas, static restrictions, guaranteed teardown, and adversarial tests.
+9. For documentation drafts: review the `kyverno/website` App installation
+   and its exact two permissions, the bot DCO identity, supplied-content
+   policy, `kyvernaut-website` environment protection, current Astro content
+   root, target repository rulesets, website CI, idempotent retry behavior,
+   and kill-switch/rollback drills.
 
 Activation is a normal reviewed PR changing `mode: shadow` to `mode: active`.
 To stop new work immediately, set `KYVERNAUT_PAUSED=true`; then return the
@@ -261,8 +307,9 @@ PR documentation impact is also deterministic. Changes under configured
 user-facing API, command, chart, engine, policy, controller, CEL, validation,
 configuration, background, or webhook paths require one of: an in-repo
 documentation change, a `kyverno/website` issue/PR link, or an explicit
-reviewed exemption label. The advisor reports the requirement but has no
-cross-repository token and cannot open a website PR.
+reviewed exemption label. The ordinary advisor has no cross-repository token.
+The separately disabled manual draft workflow can request its narrowly scoped
+App token only after all controls above authorize an exact supplied document.
 
 The repository's existing `.github/workflows/check-codegen.yaml` remains the
 authoritative codegen gate: it runs code and documentation generation plus

@@ -123,6 +123,7 @@ issue_reproduction:
 
 documentation:
   enabled: true
+  source_repository: kyverno/kyverno
   user_facing_paths:
     - api/
     - charts/
@@ -147,3 +148,17 @@ documentation:
     - kind/documentation
     - "kyvernaut:docs-reviewed"
   website_repository: kyverno/website
+  draft_pull_requests:
+    # Cross-repository writes require this flag, global active mode, an
+    # authorized manual dispatcher, and a separately installed GitHub App.
+    enabled: false
+    target_base_branch: main
+    content_root: src/content/docs/docs/
+    allowed_extensions:
+      - .md
+    max_content_bytes: 32768
+    max_changed_files: 3000
+    branch_prefix: kyvernaut/docs
+    commit_signoff:
+      name: Kyvernaut
+      email: kyvernaut@users.noreply.github.com

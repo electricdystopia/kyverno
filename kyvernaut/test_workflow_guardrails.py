@@ -11,6 +11,7 @@ REPRO_WORKFLOW = ROOT / ".github/workflows/kyvernaut-repro-plan.yaml"
 DEPENDENCY_MERGE_WORKFLOW = ROOT / ".github/workflows/kyvernaut-dependency-merge.yaml"
 SCOPED_TEST_WORKFLOW = ROOT / ".github/workflows/kyvernaut-scoped-tests.yaml"
 QA_WORKFLOW = ROOT / ".github/workflows/kyvernaut-docs-qa.yaml"
+DOCS_DRAFT_WORKFLOW = ROOT / ".github/workflows/kyvernaut-docs-draft.yaml"
 
 
 def test_advisor_workflow_has_minimal_permissions():
@@ -197,6 +198,100 @@ def test_docs_qa_kill_switch_guards_every_external_step():
     for name in guarded_steps:
         start = text.index(f"- name: {name}")
         following = text[start : start + 300]
+        assert "steps.pause.outputs.paused != 'true'" in following
+
+
+def test_docs_draft_is_manual_dormant_and_uses_read_only_workflow_token():
+    workflow = yaml.safe_load(DOCS_DRAFT_WORKFLOW.read_text(encoding="utf-8"))
+    text = DOCS_DRAFT_WORKFLOW.read_text(encoding="utf-8")
+    config = yaml.safe_load((ROOT / ".github/ai-maintainer.yaml").read_text(encoding="utf-8"))
+    assert workflow["permissions"] == {
+        "contents": "read",
+        "pull-requests": "read",
+    }
+    assert "workflow_dispatch:" in text
+    assert "pull_request_target:" not in text
+    assert "schedule:" not in text
+    assert "github.ref_name == github.event.repository.default_branch" in text
+    assert config["mode"] == "shadow"
+    assert config["documentation"]["draft_pull_requests"]["enabled"] is False
+    assert workflow["jobs"]["draft"]["environment"] == "kyvernaut-website"
+    assert "ref: ${{ github.sha }}" in text
+    assert "persist-credentials: false" in text
+    assert "--require-hashes" in text
+    assert "--only-binary=:all:" in text
+    assert "WEBSITE_CONTENT_INPUT: ${{ inputs.website_content }}" in text
+    assert "--content-env WEBSITE_CONTENT_INPUT" in text
+    assert '--content "${{ inputs.website_content }}"' not in text
+
+
+def test_docs_draft_app_token_is_scoped_to_one_repository_and_two_permissions():
+    text = DOCS_DRAFT_WORKFLOW.read_text(encoding="utf-8")
+    token = text.index("Create website-scoped GitHub App token")
+    executor = text.index("Revalidate target and create one draft pull request")
+    token_block = text[token:executor]
+    assert "actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1" in token_block
+    assert "owner: kyverno" in token_block
+    assert "repositories: website" in token_block
+    assert "permission-contents: write" in token_block
+    assert "permission-pull-requests: write" in token_block
+    assert "permission-issues:" not in token_block
+    assert "skip-token-revoke" not in token_block
+    assert "github-token: ${{ steps.app-token.outputs.token }}" in text[executor:]
+    assert text.count("steps.app-token.outputs.token") == 1
+
+
+def test_docs_draft_revalidates_both_repositories_before_bounded_mutation():
+    text = DOCS_DRAFT_WORKFLOW.read_text(encoding="utf-8")
+    plan = text.index("Compile documentation draft decision")
+    source_revalidate = text.index(
+        "Revalidate source and website immediately before mutation"
+    )
+    token = text.index("Create website-scoped GitHub App token")
+    executor = text.index("Revalidate target and create one draft pull request")
+    target_refetch = text.index(
+        "const base = await github.rest.git.getRef", executor
+    )
+    branch_create = text.index("github.rest.git.createRef", target_refetch)
+    file_write = text.index(
+        "github.rest.repos.createOrUpdateFileContents", branch_create
+    )
+    pr_create = text.index("github.rest.pulls.create", file_write)
+    audit = text.index("Upload immutable documentation draft audit")
+    assert plan < source_revalidate < token < executor
+    assert executor < target_refetch < branch_create < file_write < pr_create < audit
+    assert text.count("github.rest.git.createRef") == 1
+    assert text.count("github.rest.repos.createOrUpdateFileContents") == 1
+    assert text.count("github.rest.pulls.create") == 1
+    assert "draft: true" in text[pr_create : pr_create + 500]
+    assert "github.rest.pulls.merge" not in text
+    assert "git push" not in text
+    assert "pulls.update" not in text
+    assert "issues." not in text
+    assert "website base changed immediately before mutation" in text
+    assert "website target changed immediately before mutation" in text
+    assert "source PR evidence changed after planning" in text
+    assert "dispatcher no longer has write-level permission" in text
+    assert 'state: "all"' in text[executor:]
+    assert "already used by a closed pull request" in text[executor:]
+
+
+def test_docs_draft_kill_switch_guards_every_external_step():
+    text = DOCS_DRAFT_WORKFLOW.read_text(encoding="utf-8")
+    guarded_steps = (
+        "Checkout exact trusted default-branch commit",
+        "Set up planner Python",
+        "Install hash-locked planner dependency",
+        "Collect immutable source and website evidence",
+        "Compile documentation draft decision",
+        "Revalidate source and website immediately before mutation",
+        "Create website-scoped GitHub App token",
+        "Revalidate target and create one draft pull request",
+        "Upload immutable documentation draft audit",
+    )
+    for name in guarded_steps:
+        start = text.index(f"- name: {name}")
+        following = text[start : start + 420]
         assert "steps.pause.outputs.paused != 'true'" in following
 
 
