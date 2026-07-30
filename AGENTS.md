@@ -244,3 +244,32 @@ Use this checklist before every push to avoid repeated CI failures:
 - [Feature Flags](./docs/dev/feature-flags/README.md) — How to add and use feature toggles
 - [Reports Design](./docs/dev/reports/README.md) — Report architecture
 - [Kyverno Docs](https://kyverno.io) — User-facing documentation
+
+## Machine-readable automation metadata
+
+- [`kyvernaut/task-index.yaml`](./kyvernaut/task-index.yaml) — stable
+  build/test/lint/codegen/KinD commands with mutation, network, cluster,
+  destructiveness, and automation metadata.
+- `python3 kyvernaut/task_index.py --validate` — verify every indexed Make
+  target and script still exists.
+- [`kyvernaut/path-test-map.yaml`](./kyvernaut/path-test-map.yaml) — map a
+  changed source path to unit, CLI, and chainsaw suites plus risk/codegen
+  requirements.
+- [`kyvernaut/conformance-profiles.yaml`](./kyvernaut/conformance-profiles.yaml)
+  — translate mapped chainsaw scopes into the existing CI cluster/config
+  profiles, with unsupported specialized suites called out explicitly.
+- `python3 kyvernaut/scope_tests.py --git-diff <base>...HEAD` — generate a
+  scoped test plan for a diff.
+- `python3 kyvernaut/scoped_ci.py --repo . --validate` — validate executable
+  scoped-CI profiles and every referenced repository path.
+- `python3 kyvernaut/issue_triage.py --repo . --validate-labels` — validate
+  every managed and excluded issue label against repository metadata.
+- `python3 kyvernaut/qa_retrieval.py --repo . --validate` — validate the
+  bounded, repository-local documentation source catalog used for Q&A.
+- `python3 kyvernaut/module_boundaries.py --repo . --validate` — ensure the
+  reviewed local Go modules and versioned API/SDK boundaries match the tree.
+- `python3 kyvernaut/change_metadata.py --repo . --validate` — ensure stable
+  PR scope/compatibility labels are declared in metadata and template guidance.
+- [`kyvernaut/SAFE_AUTOMATION.md`](./kyvernaut/SAFE_AUTOMATION.md) —
+  repository-wide permission, path, kill-switch, audit, and human-review
+  boundaries.

@@ -1,47 +1,209 @@
-# Kyvernaut AI Maintainer Assistant — POC: diff-to-test-scope mapper
+# Kyvernaut — Kyverno AI Maintainer Assistant
 
-This is a working proof-of-concept for the **Phase 0 + Phase 2** slice of the
-proposed AI Maintainer Assistant (Kyvernaut): a machine-readable map from Kyverno source
-paths to the test suites that cover them, plus a tool that consumes it to
-turn a PR diff into a scoped test plan and a merge-risk assessment.
+This directory contains Kyvernaut's Phase 0–4 foundations: repository safety
+metadata, a diff-to-test-scope mapper, dependency PR decisions and a dormant
+merge executor, PR hygiene, issue triage, and a dormant isolated reproduction
+harness, plus retrieval-only documentation Q&A. The checked-in policy remains
+in `shadow` mode with reproduction separately disabled, so the system can be
+evaluated without authorizing dependency merges or issue-manifest execution.
 
-I picked this slice deliberately, not the flashiest one (Dependabot
-auto-merge, Slack bot). It's the piece that:
-
-1. **Requires no new infrastructure.** No GitHub App, no sandbox runtime, no
-   webhook receiver — just the repo's own structure. You can run it today.
-2. **Is falsifiable.** I ran it against real merged PRs from `kyverno/kyverno`
-   history and checked the output against what a human reviewer would
-   actually want to run. Results below.
-3. **De-risks the riskiest part of the larger proposal.** Every other phase
-   (auto-merge, scoped CI, issue repro, Q&A) depends on the agent correctly
-   understanding "what does this diff touch and how sensitive is that area."
-   If that classification is wrong, everything built on top of it is wrong
-   in a way that's hard to catch. So it's the part worth proving out first,
-   and worth maintainers being able to audit as a plain YAML file rather
-   than a black-box model judgment.
-4. **Encodes real project knowledge, not invented structure.** The risk
-   tiers and human-review flags mirror what's already in `CODEOWNERS` (e.g.
-   `pkg/cosign`, `pkg/notary`, `api/kyverno/v1` already have named
-   always-review owners) — this doesn't introduce a new policy, it makes an
-   existing one machine-actionable.
+The decisions are deterministic and auditable rather than opaque model
+judgments. Risk tiers and human-review flags encode repository structure and
+`CODEOWNERS` knowledge in reviewed YAML, and every stateful workflow executes
+only trusted default-branch code.
 
 ## What's here
 
-- `path-test-map.yaml` — the manifest itself. ~20 rules covering the main
+- `path-test-map.yaml` — the versioned manifest. Its rules cover the main
   `pkg/`, `api/`, `cmd/cli/`, and `charts/` areas, each with: unit test
   packages, chainsaw conformance suites, CLI suites, a risk tier, whether
   codegen verification is required, and whether an automation agent must
-  defer to a human regardless of CI outcome.
+  defer to a human regardless of CI outcome. It also records current
+  coverage gaps so newly added directories fail closed.
 - `scope_tests.py` — the mapper. Takes a commit SHA, a `git diff` ref range,
   or a plain file list, and emits either a human-readable plan or JSON (for
-  wiring into a GitHub Action / bot comment later).
-- `test_scope_tests.py` — 6 unit tests asserting the rules behave as
+  GitHub Actions and bot comments). `--validate` checks its
+  schema, safety invariants, and repository directory coverage.
+- `conformance-profiles.yaml`, `scoped_ci.py`, and
+  `.github/workflows/kyvernaut-scoped-tests.yaml` — translate the map into
+  capped unit/CLI/Chainsaw matrices and run them on PR merge commits. Planning
+  always uses the exact trusted base commit; unsupported specialized suites
+  and uncertain paths require authoritative full CI instead of producing a
+  false scoped green.
+- `test_scope_tests.py` — regression tests asserting the rules behave as
   intended (security paths get flagged, dependency-only diffs are
-  auto-merge eligible, most-specific-rule-wins, etc). All passing.
-- `example-AGENTS-stub/pkg-cel-policies-ivpol-AGENTS.md` — a worked example
-  of the "safe automation boundaries" per-directory doc from the proposal,
-  applied to a real, security-sensitive package (`pkg/cel/policies/ivpol`).
+  candidates, low-risk non-dependency diffs are not, prefix matches respect
+  path boundaries, most-specific-rule-wins, etc).
+- `.github/workflows/kyvernaut-path-test-map.yaml` — a read-only CI check
+  which validates the manifest and runs its tests whenever tracked source
+  or conformance directory structure changes.
+- `.github/ai-maintainer.yaml` — repository-owned controls for enablement,
+  shadow/active mode, bot identities, allowed bump types/files, hold labels,
+  required CI/mergeability, and the kill switch.
+- `dependency_pr.py` — the Phase 1 dependency-PR decision engine. It emits
+  a deterministic, auditable JSON recommendation and deliberately has no
+  GitHub client or merge capability.
+- `dependency_batch.py` and
+  `.github/workflows/kyvernaut-dependency-merge.yaml` — a scheduled,
+  rate-limited executor boundary. It is dormant in the checked-in shadow
+  mode and revalidates immutable evidence immediately before a head-bound
+  squash merge when maintainers explicitly activate it.
+- `pr_shadow.py` and `.github/workflows/kyvernaut-pr-advisor.yaml` — the
+  operational shadow integration. It executes trusted default-branch code,
+  updates one advisory comment, and uploads the exact decision artifacts.
+- `pr_hygiene.py`, `hygiene_batch.py`, and
+  `.github/workflows/kyvernaut-pr-hygiene.yaml` — behind/stale evaluation
+  plus weekday, capped, cooldown-aware author/reviewer reminders.
+- `issue_triage.py` and `.github/workflows/kyvernaut-issue-triage.yaml` —
+  deterministic bug/feature/question plus CLI/webhook classification,
+  missing reproduction-field requests, and a capped, additive-only managed
+  label executor that remains dormant in shadow mode.
+- `repro_plan.py`, `repro_execute.py`, and
+  `.github/workflows/kyvernaut-repro-plan.yaml` — maintainer-dispatched
+  extraction, static validation, an ephemeral KinD sandbox, bounded
+  execution/diagnostics, guaranteed teardown, and an audited issue result.
+  The checked-in policy leaves the execution job unreachable.
+- `docs_requirement.py` — detects user-facing diffs without an in-repo docs
+  change, `kyverno/website` issue/PR link, or reviewed exemption and includes
+  the result in the PR advisory artifact/comment.
+- `qa-sources.yaml`, `qa_retrieval.py`, and
+  `.github/workflows/kyvernaut-docs-qa.yaml` — a bounded, retrieval-only
+  Phase 4 foundation over reviewed repository Markdown. It emits exact
+  passages with source hashes and line citations when deterministic
+  confidence thresholds pass, otherwise it escalates without answering.
+  The manual workflow is read-only and has no Slack or Discussions token.
+- `SAFE_AUTOMATION.md` — the explicit path, permission, kill-switch, audit,
+  and activation boundaries.
+- `PROJECT_STATUS.md` — requirement-by-requirement implementation evidence
+  and remaining gaps; dormant code is not represented as production proof.
+- `pkg/engine/AGENTS.md`, `pkg/webhooks/AGENTS.md`,
+  `pkg/controllers/AGENTS.md`, and `test/conformance/AGENTS.md` — local
+  entry points, invariants, focused commands, and autonomous-edit boundaries
+  for the high-traffic areas named in Phase 0.
+- `task-index.yaml` and `task_index.py` — a queryable build/test/lint/codegen
+  task catalog with mutation, network, cluster, destructiveness, and
+  automation metadata. Validation catches stale Makefile targets.
+- `.github/labels.yml` — the central issue/PR label catalog, including
+  Kyvernaut hold, opt-out, approval, and review controls.
+- `MODULE_BOUNDARIES.md`, `module-boundaries.yaml`, and
+  `module_boundaries.py` — the evidence-backed decision to retain the root
+  product module, two isolated build-tool modules, and separately versioned
+  API/SDK repositories, plus drift validation.
+- `change-metadata.yaml` and `change_metadata.py` — stable docs-only,
+  generated-only, API-change, and explicit breaking/non-breaking API
+  classifications. The PR advisor records this decision and fails metadata
+  completeness when an API diff lacks exactly one compatibility declaration.
+
+## Safety boundary: candidate does not mean merge
+
+`auto_merge_eligible` is an opt-in, scope-only signal. Today only the
+`dependency-metadata` rule (`go.mod` and `go.sum`) opts in. A low-risk docs,
+generated-CRD, or conformance-fixture-only change is not an auto-merge
+candidate.
+
+Even when the signal is true, a Phase 1 caller must still verify all of:
+
+1. The PR author is the configured Dependabot/Renovate identity.
+2. The dependency change is patch/minor, not major or an unclassified ref.
+3. Every required CI and policy check is green.
+4. No maintainer hold label is present.
+5. The repository/workflow kill switch is not active.
+6. The PR remains open, non-draft, unchanged at the authorized head SHA, and
+   contains no configured breaking-change marker.
+
+The mapper cannot grant merge permission by itself.
+
+The dependency evaluator also fails closed: missing CI or mergeability
+signals are `unknown` and block eligibility. In `shadow` mode a fully valid
+PR produces `would_merge` while `action_authorized` remains false. The
+checked-in repository policy enables the comment-only advisor but remains
+in shadow mode; setting `enabled: false` suppresses its new actions.
+
+## GitHub operation
+
+The PR advisor listens to pull-request changes and evaluates the current
+file list without checking out PR code. It has only `checks:read`,
+`contents:read`, and `pull-requests:write`; checkout credentials are not
+persisted. One marker-owned comment is updated in place, and the full JSON
+evidence is retained for 30 days as a workflow artifact. The sole runtime
+package installed under that token is locked to the CPython 3.13 Linux wheel
+by version and SHA-256.
+
+Set the repository Actions variable `KYVERNAUT_PAUSED=true` (also accepts
+`1`, `yes`, or `on`) for the immediate kill switch. The workflow checks it
+before checkout, API reads, artifact upload, or comment writes.
+
+The advisor's event-time check snapshot is advisory and may be pending.
+The separate dependency workflow runs on a schedule, considers at most 50
+open PRs, and authorizes at most three merges per run. In active mode it
+refetches the PR immediately before each operation and refuses to merge if
+the author, base, title, body hash, labels, files, head SHA, checks, statuses,
+or mergeability changed. The GitHub merge request is SHA-bound and branch
+protection/rulesets remain the final independent gate. In the checked-in
+shadow mode, its execution batch is always empty.
+
+The scoped-test workflow is read-only and runs in `shadow_compare` mode on
+PRs. Its planner checks out the exact base SHA into a separate directory and
+collects changed filenames as JSON, so a PR cannot rewrite its own selection
+policy. It emits at most 12 unit and 8 conformance jobs, runs the selected
+CLI suite when required, and reuses the existing conformance runner's
+cluster/config profiles. Pull-request tests receive no persisted checkout
+credential; the Chainsaw input gets the non-secret sentinel `disabled`
+instead of `github.token`.
+
+Unmatched, ambiguous, and generic low-confidence paths expand to
+`go test ./...` and explicitly require authoritative full conformance. The
+same is true for `**`, over-cap selections, and specialized `custom-sigstore`
+infrastructure that cannot be represented faithfully by the generic runner.
+Those limitations remain visible in the selection artifact and step summary.
+Existing full unit/codegen/conformance workflows remain authoritative; the
+scoped workflow must not become a required replacement until real shadow
+comparison data demonstrates an acceptable false-negative rate.
+
+The event advisor recommends a branch update when GitHub reports `behind`.
+The scheduled hygiene workflow examines the 50 oldest open PRs on weekdays,
+posts at most 10 reminders, and observes a seven-day per-comment cooldown.
+It does not call GitHub's branch-update or workflow-rerun APIs.
+The repository's existing `PR Branch Auto-Updater` already owns branch
+updates with dedicated GitHub App credentials, so Kyvernaut does not create
+a competing updater.
+
+Issue triage runs when an issue is opened, edited, labeled, or unlabeled. It
+parses the repository issue-form headings, never executes issue content, and
+updates one advisory comment. Security and `kyvernaut:no-triage` issues are
+excluded. The checked-in shadow mode only suggests labels. In active mode, a
+separate executor may add at most four labels from the reviewed managed-label
+catalog; it never removes or replaces labels and re-fetches the issue to verify
+its state, title/body hashes, and complete current label set before acting.
+Both the decision and any execution result are retained in the audit artifact.
+
+Maintainers can trigger reproduction by applying
+`kyvernaut:repro-approved` or by manually dispatching the workflow. The
+planner requires that approval label in either path and rejects privileged,
+RBAC, secret,
+host-access, explicit-namespace, external-call, custom-command,
+service-account-token, unapproved/unpreloaded-image, unsafe pull-policy, and
+oversized inputs. Invalid input produces errors and no apply-ready manifest.
+
+Execution requires all three independent gates: global `active` mode,
+`issue_reproduction.enabled: true`, and the approval label. It builds trusted
+default-branch Kyverno, installs it in an ephemeral KinD cluster, preloads the
+small image allowlist, creates a dedicated namespace with quota/limit/default
+deny controls, cuts and verifies cluster egress, then refetches the issue and
+compares the exact plan and manifest bundle before applying anything.
+Issue-authored YAML is passed to `kubectl` over stdin with argv execution,
+never through a shell. The result includes the expected statement,
+per-document API acceptance/rejection, resources, policies, reports, events,
+pod status, and bounded logs. Teardown and egress-rule removal run under
+`always()`. The checked-in shadow/disabled configuration authorizes none of
+this.
+
+Kyverno's existing `Codegen` workflow remains the blocking source of truth
+for `make codegen-all-code`, documentation generation, and
+`make verify-codegen`. Kyvernaut consumes codegen risk metadata but does not
+create a redundant gate. Documentation-impact detection is advisory because
+the current token is intentionally unable to open a cross-repository
+website PR.
 
 ## Demo: three real commits from `kyverno/kyverno` main
 
@@ -51,7 +213,7 @@ conformance fixtures.
 
 ```
 Overall risk: MEDIUM
-Auto-merge eligible: False
+Auto-merge candidate: False
 
 Unit test packages to run:
   go test ./cmd/cli/kubectl-kyverno/... ./pkg/cel/policies/mpol/...
@@ -74,7 +236,7 @@ package targets.
 
 ```
 Overall risk: HIGH
-Auto-merge eligible: False
+Auto-merge candidate: False
 
 ⚠️  HUMAN REVIEW REQUIRED — do not auto-merge:
    - pkg/cel/policies/ivpol/engine/reconciler.go -> rule 'cel-ivpol':
@@ -92,7 +254,7 @@ Only `go.mod` / `go.sum` changed.
 
 ```
 Overall risk: LOW
-Auto-merge eligible: True
+Auto-merge candidate: True
 
 Unit test packages to run:
   (none matched)
@@ -134,6 +296,12 @@ a coin-flip to a low-risk one. Now it's a hard fail-safe: unmatched +
 forced human review, never a silent pick. Both are covered by regression
 tests in `test_scope_tests.py`.
 
+**Fail-closed manifest checks.** `scope_tests.py --validate` rejects
+duplicate IDs/prefixes, invalid risk values, unsafe auto-merge opt-ins, and
+stale directory coverage. Existing source/suite gaps are explicit
+allowlists in the manifest; adding a new top-level `pkg/` or chainsaw suite
+without either a real mapping or an explicit fallback decision fails CI.
+
 **How I'd validate this for real, beyond hand-picked demos** (Phase 0/1 work,
 not something 15 days of solo POC time can fully deliver):
 1. **Backtest against historical regressions.** For PRs that were later
@@ -147,10 +315,9 @@ not something 15 days of solo POC time can fully deliver):
    scoped plan actually skip suites once it's been shown to agree with the
    full suite's pass/fail outcome across a large enough sample. The tool
    should start as a comment-only advisor, not a CI gate.
-3. **A CI check on the manifest itself.** Fail if a new top-level `pkg/` or
-   `test/conformance/chainsaw/` directory appears with no corresponding
-   rule — so coverage gaps get caught at manifest-authoring time instead of
-   silently falling into `pkg-fallback` forever.
+3. **Keep the manifest CI check blocking.** It now fails if a new top-level
+   `pkg/` or `test/conformance/chainsaw/` directory appears with neither a
+   mapping nor an explicit fallback decision.
 4. **Maintainer sign-off on the risk tiers.** I derived `high`/
    `requires_human_review` from `CODEOWNERS`, but CODEOWNERS encodes "who
    reviews this," not "what's the blast radius if scoping gets this wrong."
@@ -162,8 +329,16 @@ not something 15 days of solo POC time can fully deliver):
 ```bash
 git clone --depth 60 https://github.com/kyverno/kyverno.git
 pip install pyyaml --break-system-packages
-python3 scope_tests.py --repo kyverno --commit <any-sha>
-python3 -m pytest test_scope_tests.py -q
+python3 kyvernaut/scope_tests.py --repo . --validate
+python3 kyvernaut/scoped_ci.py --repo . --validate
+python3 kyvernaut/issue_triage.py --repo . --validate-labels
+python3 kyvernaut/qa_retrieval.py --repo . --validate
+python3 kyvernaut/module_boundaries.py --repo . --validate
+python3 kyvernaut/change_metadata.py --repo . --validate
+python3 kyvernaut/task_index.py --repo . --validate
+python3 kyvernaut/task_index.py --category test
+python3 kyvernaut/scope_tests.py --repo . --commit <any-sha>
+python3 -m pytest kyvernaut -q
 ```
 
 ## What I'd do next 
@@ -171,20 +346,29 @@ python3 -m pytest test_scope_tests.py -q
 - **Phase 0 (this POC → hardened):** get maintainer sign-off on the risk
   tiers in `path-test-map.yaml` (I derived them from `CODEOWNERS` plus my
   own read of the code, but the actual security/blast-radius judgment
-  should be maintainer-approved, not agent-approved). Expand coverage from
-  ~20 rules to full `pkg/` coverage; add a CI check that fails if a new
-  top-level `pkg/` or `test/conformance/chainsaw/` directory appears without
-  a corresponding rule, so the map can't silently go stale.
-- **Phase 1:** wire `auto_merge_eligible` + `requires_human_review` from
-  this tool into the Dependabot-PR check, and the `codegen_verify_required`
-  flag into the codegen gate — both already described in the proposal as
-  separate bullet points, both are direct consumers of this output.
-- **Phase 2:** port `scope_tests.py` into a GitHub Action that posts the
-  plan as a PR comment and only triggers the listed chainsaw suites,
-  measuring actual CI time saved on a sample of real PRs before proposing
-  it as default behavior (a wrong scope-down that skips a suite that should
-  have run is worse than a slow CI run, so this needs a shadow-mode period
-  where it comments but doesn't actually gate anything).
-- **Phase 0, doc side:** repeat the `example-AGENTS-stub/` pattern for the
-  other high-traffic directories named in the proposal
-  (`pkg/engine/`, `pkg/webhooks/`, `pkg/controllers/`).
+  should be maintainer-approved, not agent-approved). Expand the current
+  rules to full `pkg/` coverage. The stale-map CI check is implemented;
+  retire entries from the explicit fallback allowlists as maintainers
+  confirm mappings.
+- **Phase 1:** keep the dependency executor in shadow mode until historical
+  and live shadow data contain meaningful failures, maintainers approve the
+  visible-check/ruleset model, and the activation/rollback drill in
+  `SAFE_AUTOMATION.md` passes. The executor and immediate evidence
+  revalidation are implemented for review. Behind/stale recommendations and
+  reminders are implemented; the repository's existing GitHub App workflow
+  remains the single owner of branch updates and their resulting CI reruns.
+- **Phase 2:** collect outcomes from the implemented scoped unit/CLI/Chainsaw
+  workflow and compare them with authoritative full-suite outcomes. Do not
+  remove or de-require full checks until the false-negative evidence is
+  strong enough for maintainer sign-off.
+- **Phase 3:** collect shadow evidence for the implemented issue-label
+  suggestions, then review the additive-only executor and label catalog before
+  activating it. Validate reproduction output in manual trials. Before
+  reproduction activation, maintainers must review the sandbox threat model,
+  run adversarial egress/teardown drills, and decide whether reproducing
+  trusted default-branch behavior is sufficient or version-selectable Kyverno
+  installs are required.
+- **Phase 4:** evaluate the implemented retrieval-only, citation-required
+  docs index on a maintainer-curated question set. Add synthesis only after
+  measuring citation correctness and escalation quality; connect Slack or
+  Discussions write access only after a separate permission review.

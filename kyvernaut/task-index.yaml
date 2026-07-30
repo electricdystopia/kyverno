@@ -1,0 +1,323 @@
+# Machine-readable index of stable developer tasks.
+version: 1
+
+tasks:
+  - id: tools-install
+    category: setup
+    argv: [make, install-tools]
+    description: Install repository-pinned development tools into .tools.
+    automation: review
+    mutates_worktree: true
+    destructive: false
+    requires_network: true
+    requires_cluster: false
+
+  - id: tools-clean
+    category: setup
+    argv: [make, clean-tools]
+    description: Remove repository-local development tools.
+    automation: never
+    mutates_worktree: true
+    destructive: true
+    requires_network: false
+    requires_cluster: false
+
+  - id: format
+    category: lint
+    argv: [make, fmt]
+    description: Format all Go packages.
+    automation: safe
+    mutates_worktree: true
+    destructive: false
+    requires_network: false
+    requires_cluster: false
+
+  - id: format-check
+    category: lint
+    argv: [make, fmt-check]
+    description: Verify Go formatting.
+    automation: safe
+    mutates_worktree: true
+    destructive: false
+    requires_network: false
+    requires_cluster: false
+
+  - id: imports
+    category: lint
+    argv: [make, imports]
+    description: Normalize Go imports.
+    automation: safe
+    mutates_worktree: true
+    destructive: false
+    requires_network: true
+    requires_cluster: false
+
+  - id: imports-check
+    category: lint
+    argv: [make, imports-check]
+    description: Verify Go import formatting.
+    automation: safe
+    mutates_worktree: true
+    destructive: false
+    requires_network: true
+    requires_cluster: false
+
+  - id: vet
+    category: lint
+    argv: [make, vet]
+    description: Run go vet across the repository.
+    automation: safe
+    mutates_worktree: false
+    destructive: false
+    requires_network: false
+    requires_cluster: false
+
+  - id: unused-package-check
+    category: lint
+    argv: [make, unused-package-check]
+    description: Verify go.mod and go.sum are tidy.
+    automation: safe
+    mutates_worktree: true
+    destructive: false
+    requires_network: true
+    requires_cluster: false
+
+  - id: build-all
+    category: build
+    argv: [make, build-all]
+    description: Build all Kyverno binaries.
+    automation: safe
+    mutates_worktree: true
+    destructive: false
+    requires_network: true
+    requires_cluster: false
+
+  - id: build-admission-controller
+    category: build
+    argv: [make, build-kyverno]
+    description: Build the admission-controller binary.
+    automation: safe
+    mutates_worktree: true
+    destructive: false
+    requires_network: true
+    requires_cluster: false
+
+  - id: build-cli
+    category: build
+    argv: [make, build-cli]
+    description: Build kubectl-kyverno.
+    automation: safe
+    mutates_worktree: true
+    destructive: false
+    requires_network: true
+    requires_cluster: false
+
+  - id: test-unit
+    category: test
+    argv: [make, test-unit]
+    description: Run the complete Go unit suite with race detection and coverage.
+    automation: safe
+    mutates_worktree: true
+    destructive: false
+    requires_network: false
+    requires_cluster: false
+
+  - id: test-cli
+    category: test
+    argv: [make, test-cli]
+    description: Run policy-repository and local CLI tests.
+    automation: safe
+    mutates_worktree: true
+    destructive: false
+    requires_network: true
+    requires_cluster: false
+
+  - id: test-cli-local
+    category: test
+    argv: [make, test-cli-local]
+    description: Run local CLI fixtures without the external policy repository.
+    automation: safe
+    mutates_worktree: true
+    destructive: false
+    requires_network: false
+    requires_cluster: false
+
+  - id: test-helm
+    category: test
+    argv: [make, helm-test]
+    description: Run Helm chart tests.
+    automation: safe
+    mutates_worktree: true
+    destructive: false
+    requires_network: true
+    requires_cluster: false
+
+  - id: test-cache-clean
+    category: test
+    argv: [make, test-clean]
+    description: Clear the Go test cache.
+    automation: never
+    mutates_worktree: false
+    destructive: true
+    requires_network: false
+    requires_cluster: false
+
+  - id: codegen-code
+    category: codegen
+    argv: [make, codegen-all-code]
+    description: Regenerate APIs, clients, CRDs, CLI, Helm, and manifests.
+    automation: review
+    mutates_worktree: true
+    destructive: false
+    requires_network: true
+    requires_cluster: false
+
+  - id: codegen-all
+    category: codegen
+    argv: [make, codegen-all]
+    description: Regenerate all code and documentation.
+    automation: review
+    mutates_worktree: true
+    destructive: false
+    requires_network: true
+    requires_cluster: false
+
+  - id: codegen-verify
+    category: codegen
+    argv: [make, verify-codegen]
+    description: Verify generated code and documentation match their sources.
+    automation: safe
+    mutates_worktree: false
+    destructive: false
+    requires_network: true
+    requires_cluster: false
+
+  - id: images-build-all
+    category: image
+    argv: [make, ko-build-all]
+    description: Build all local container images with ko.
+    automation: review
+    mutates_worktree: true
+    destructive: false
+    requires_network: true
+    requires_cluster: false
+
+  - id: kind-create
+    category: cluster
+    argv: [make, kind-create-cluster]
+    description: Create the configured local KinD cluster.
+    automation: review
+    mutates_worktree: false
+    destructive: false
+    requires_network: true
+    requires_cluster: false
+
+  - id: kind-delete
+    category: cluster
+    argv: [make, kind-delete-cluster]
+    description: Delete the configured local KinD cluster.
+    automation: never
+    mutates_worktree: false
+    destructive: true
+    requires_network: false
+    requires_cluster: true
+
+  - id: kind-load-all
+    category: cluster
+    argv: [make, kind-load-all]
+    description: Build and load all Kyverno images into KinD.
+    automation: review
+    mutates_worktree: true
+    destructive: false
+    requires_network: true
+    requires_cluster: true
+
+  - id: kind-deploy-kyverno
+    category: cluster
+    argv: [make, kind-deploy-kyverno]
+    description: Build, load, and deploy Kyverno into KinD.
+    automation: review
+    mutates_worktree: true
+    destructive: false
+    requires_network: true
+    requires_cluster: true
+
+  - id: kind-deploy-all
+    category: cluster
+    argv: [make, kind-deploy-all]
+    description: Deploy Kyverno and the default policy chart into KinD.
+    automation: review
+    mutates_worktree: true
+    destructive: false
+    requires_network: true
+    requires_cluster: true
+
+  - id: kyvernaut-validate
+    category: automation
+    argv: [python3, kyvernaut/scope_tests.py, --repo, ., --validate]
+    description: Validate Kyvernaut manifests and repository path coverage.
+    automation: safe
+    mutates_worktree: false
+    destructive: false
+    requires_network: false
+    requires_cluster: false
+
+  - id: kyvernaut-validate-scoped-ci
+    category: automation
+    argv: [python3, kyvernaut/scoped_ci.py, --repo, ., --validate]
+    description: Validate scoped-CI config, suite profiles, and referenced paths.
+    automation: safe
+    mutates_worktree: false
+    destructive: false
+    requires_network: false
+    requires_cluster: false
+
+  - id: kyvernaut-validate-labels
+    category: automation
+    argv: [python3, kyvernaut/issue_triage.py, --repo, ., --validate-labels]
+    description: Validate managed and excluded issue labels against repository metadata.
+    automation: safe
+    mutates_worktree: false
+    destructive: false
+    requires_network: false
+    requires_cluster: false
+
+  - id: kyvernaut-validate-qa-sources
+    category: automation
+    argv: [python3, kyvernaut/qa_retrieval.py, --repo, ., --validate]
+    description: Validate the bounded trusted-document source catalog for Q&A retrieval.
+    automation: safe
+    mutates_worktree: false
+    destructive: false
+    requires_network: false
+    requires_cluster: false
+
+  - id: kyvernaut-validate-modules
+    category: automation
+    argv: [python3, kyvernaut/module_boundaries.py, --repo, ., --validate]
+    description: Validate reviewed local and external Go module boundaries.
+    automation: safe
+    mutates_worktree: false
+    destructive: false
+    requires_network: false
+    requires_cluster: false
+
+  - id: kyvernaut-validate-change-metadata
+    category: automation
+    argv: [python3, kyvernaut/change_metadata.py, --repo, ., --validate]
+    description: Validate stable PR change classifications, labels, and template guidance.
+    automation: safe
+    mutates_worktree: false
+    destructive: false
+    requires_network: false
+    requires_cluster: false
+
+  - id: kyvernaut-test
+    category: automation
+    argv: [python3, -m, pytest, kyvernaut, -q]
+    description: Run all Kyvernaut regression and workflow guardrail tests.
+    automation: safe
+    mutates_worktree: true
+    destructive: false
+    requires_network: false
+    requires_cluster: false

@@ -1,0 +1,72 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+
+name: Kyvernaut path-test map
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    paths:
+      - "pkg/**"
+      - "hack/**"
+      - "go.mod"
+      - "test/conformance/chainsaw/**"
+      - "docs/dev/**"
+      - "docs/user/**"
+      - "README.md"
+      - "CONTRIBUTING.md"
+      - "DEVELOPMENT.md"
+      - "kyvernaut/**"
+      - ".github/ai-maintainer.yaml"
+      - ".github/labels.yml"
+      - ".github/PULL_REQUEST_TEMPLATE.md"
+      - ".github/ISSUE_TEMPLATE/**"
+      - ".github/workflows/kyvernaut-*.yaml"
+  push:
+    branches:
+      - main
+    paths:
+      - "pkg/**"
+      - "hack/**"
+      - "go.mod"
+      - "test/conformance/chainsaw/**"
+      - "docs/dev/**"
+      - "docs/user/**"
+      - "README.md"
+      - "CONTRIBUTING.md"
+      - "DEVELOPMENT.md"
+      - "kyvernaut/**"
+      - ".github/ai-maintainer.yaml"
+      - ".github/labels.yml"
+      - ".github/PULL_REQUEST_TEMPLATE.md"
+      - ".github/ISSUE_TEMPLATE/**"
+      - ".github/workflows/kyvernaut-*.yaml"
+
+jobs:
+  validate:
+    name: Validate coverage and safety invariants
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: kyvernaut/requirements-test.txt
+      - name: Install test dependencies
+        run: python -m pip install --requirement kyvernaut/requirements-test.txt
+      - name: Validate manifest and repository coverage
+        run: |
+          python kyvernaut/scope_tests.py --repo . --validate
+          python kyvernaut/scoped_ci.py --repo . --validate
+          python kyvernaut/issue_triage.py --repo . --validate-labels
+          python kyvernaut/qa_retrieval.py --repo . --validate
+          python kyvernaut/module_boundaries.py --repo . --validate
+          python kyvernaut/change_metadata.py --repo . --validate
+          python kyvernaut/task_index.py --repo . --validate
+      - name: Run mapper regression tests
+        run: python -m pytest kyvernaut -q
