@@ -1,0 +1,88 @@
+version: 1
+
+# Every top-level conformance scope referenced by path-test-map.yaml must be
+# present exactly once below, in profiles or unsupported. This prevents a new
+# mapping from silently reaching a generic runner with the wrong cluster.
+defaults:
+  kind_config: ./scripts/config/kind/default.yaml
+  kyverno_configs: standard
+  quarantined_tests: ""
+  install_openreports: false
+  install_kubectl_evict: false
+
+profiles:
+  autogen: {}
+  background-only: {}
+  cleanup: {}
+  cli: {}
+  deleting-policies: {}
+  exceptions: {}
+  generate:
+    install_kubectl_evict: true
+  generate-mutating-admission-policy:
+    kind_config: ./scripts/config/kind/vap-v1beta1.yaml
+    kyverno_configs: standard,generate-mutating-admission-policy
+    quarantined_tests: applyconfiguration
+  generate-mutating-admission-policy-alpha:
+    kubernetes_version: v1.33.7
+    kind_config: ./scripts/config/kind/vap-v1alpha1.yaml
+    kyverno_configs: standard,generate-mutating-admission-policy
+    quarantined_tests: applyconfiguration
+  generate-mutating-admission-policy-v1:
+    kubernetes_version: v1.36.1
+    kyverno_configs: standard,generate-mutating-admission-policy
+    quarantined_tests: applyconfiguration
+  generate-validating-admission-policy: {}
+  generating-policies:
+    quarantined_tests: sync-modify-downstream
+    install_kubectl_evict: true
+  globalcontext: {}
+  image-validating-policies: {}
+  mutate: {}
+  mutating-admission-policy-reports:
+    kind_config: ./scripts/config/kind/vap-v1beta1.yaml
+    kyverno_configs: standard,mutating-admission-policy-reports
+  mutating-admission-policy-reports-alpha:
+    kubernetes_version: v1.33.7
+    kind_config: ./scripts/config/kind/vap-v1alpha1.yaml
+    kyverno_configs: standard,mutating-admission-policy-reports
+  mutating-admission-policy-reports-v1:
+    kubernetes_version: v1.36.1
+    kyverno_configs: standard,mutating-admission-policy-reports
+  mutating-policies: {}
+  namespaced-deleting-policies: {}
+  namespaced-generating-policies:
+    quarantined_tests: sync-modify-downstream
+    install_kubectl_evict: true
+  namespaced-image-validating-policies: {}
+  namespaced-mutating-policies: {}
+  namespaced-validating-policies: {}
+  openreports:
+    kyverno_configs: openreports
+    install_openreports: true
+  policy-exceptions-disabled:
+    kyverno_configs: default
+  policy-validation: {}
+  rangeoperators: {}
+  reports: {}
+  reports-exclude-result:
+    kubernetes_version: v1.34.0
+    kyverno_configs: exclude-result
+  sigstore-custom-tuf:
+    kind_config: ./scripts/config/kind/vap-v1beta1.yaml
+    kyverno_configs: standard,sigstore-custom-tuf
+  validate: {}
+  validating-admission-policy-reports: {}
+  validating-policies: {}
+  verify-images: {}
+  verify-manifests: {}
+  webhook-configurations: {}
+  webhooks: {}
+
+unsupported:
+  "**": >-
+    Full conformance requires the authoritative multi-profile workflow; a
+    single generic KinD job would silently omit specialized suites.
+  custom-sigstore: >-
+    Requires the Sigstore scaffolding workflow, Fulcio/Rekor/TUF services,
+    identity tokens, and a separately published test image.

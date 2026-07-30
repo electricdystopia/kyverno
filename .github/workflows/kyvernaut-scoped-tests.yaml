@@ -1,0 +1,266 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+
+name: Kyvernaut scoped tests
+
+on:
+  pull_request:
+    branches:
+      - main
+      - release-*
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: kyvernaut-scoped-tests-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  plan:
+    name: Compile trusted scoped test plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      assistant_enabled: ${{ steps.compile.outputs.assistant_enabled || steps.empty.outputs.assistant_enabled }}
+      decision_id: ${{ steps.compile.outputs.decision_id || steps.empty.outputs.decision_id }}
+      unit_count: ${{ steps.compile.outputs.unit_count || steps.empty.outputs.unit_count }}
+      conformance_count: ${{ steps.compile.outputs.conformance_count || steps.empty.outputs.conformance_count }}
+      run_cli: ${{ steps.compile.outputs.run_cli || steps.empty.outputs.run_cli }}
+      codegen_required: ${{ steps.compile.outputs.codegen_required || steps.empty.outputs.codegen_required }}
+      requires_full_ci: ${{ steps.compile.outputs.requires_full_ci || steps.empty.outputs.requires_full_ci }}
+      unit_matrix: ${{ steps.compile.outputs.unit_matrix || steps.empty.outputs.unit_matrix }}
+      conformance_matrix: ${{ steps.compile.outputs.conformance_matrix || steps.empty.outputs.conformance_matrix }}
+    steps:
+      - name: Check repository kill switch
+        id: pause
+        shell: bash
+        env:
+          PAUSE_VALUE: ${{ vars.KYVERNAUT_PAUSED }}
+        run: |
+          value="${PAUSE_VALUE//[[:space:]]/}"
+          value="${value,,}"
+          case "$value" in
+            1|true|yes|on) echo "paused=true" >> "$GITHUB_OUTPUT" ;;
+            *) echo "paused=false" >> "$GITHUB_OUTPUT" ;;
+          esac
+
+      - name: Initialize empty fail-closed outputs
+        id: empty
+        run: |
+          echo "assistant_enabled=false" >> "$GITHUB_OUTPUT"
+          echo "decision_id=paused-or-unavailable" >> "$GITHUB_OUTPUT"
+          echo "unit_count=0" >> "$GITHUB_OUTPUT"
+          echo "conformance_count=0" >> "$GITHUB_OUTPUT"
+          echo "run_cli=false" >> "$GITHUB_OUTPUT"
+          echo "codegen_required=false" >> "$GITHUB_OUTPUT"
+          echo "requires_full_ci=true" >> "$GITHUB_OUTPUT"
+          echo 'unit_matrix={"include":[]}' >> "$GITHUB_OUTPUT"
+          echo 'conformance_matrix={"include":[]}' >> "$GITHUB_OUTPUT"
+
+      # Planning code and metadata come from the exact trusted base commit,
+      # never from the pull request. Only later read-only test jobs execute
+      # the merge ref.
+      - name: Checkout trusted base commit
+        if: steps.pause.outputs.paused != 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: trusted
+          persist-credentials: false
+
+      - name: Set up planner Python
+        if: steps.pause.outputs.paused != 'true'
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: trusted/kyvernaut/requirements-runtime.txt
+
+      - name: Install hash-locked planner dependency
+        if: steps.pause.outputs.paused != 'true'
+        run: >-
+          python -m pip install
+          --only-binary=:all:
+          --require-hashes
+          --requirement trusted/kyvernaut/requirements-runtime.txt
+
+      - name: Collect changed paths as JSON data
+        if: steps.pause.outputs.paused != 'true'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          FILES_JSON: ${{ runner.temp }}/kyvernaut-scoped-files.json
+        with:
+          script: |
+            const fs = require("fs");
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              ...context.repo,
+              pull_number: context.payload.pull_request.number,
+              per_page: 100,
+            });
+            if (files.length !== context.payload.pull_request.changed_files) {
+              core.setFailed(
+                `GitHub returned ${files.length} of ` +
+                `${context.payload.pull_request.changed_files} changed files`
+              );
+              return;
+            }
+            const paths = new Set();
+            for (const file of files) {
+              paths.add(file.filename);
+              if (file.status === "renamed" && file.previous_filename) {
+                paths.add(file.previous_filename);
+              }
+            }
+            fs.writeFileSync(
+              process.env.FILES_JSON,
+              JSON.stringify([...paths].sort().map((filename) => ({ filename })))
+            );
+
+      - name: Compile bounded execution matrices
+        if: steps.pause.outputs.paused != 'true'
+        id: compile
+        env:
+          KYVERNAUT_PAUSED: ${{ vars.KYVERNAUT_PAUSED }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          python trusted/kyvernaut/scoped_ci.py \
+            --changed-files "$RUNNER_TEMP/kyvernaut-scoped-files.json" \
+            --repo trusted \
+            --config trusted/.github/ai-maintainer.yaml \
+            --map trusted/kyvernaut/path-test-map.yaml \
+            --profiles trusted/kyvernaut/conformance-profiles.yaml \
+            --output "$RUNNER_TEMP/kyvernaut-scoped-plan/selection.json" \
+            --summary "$RUNNER_TEMP/kyvernaut-scoped-plan/summary.md" \
+            --run-id "$GITHUB_RUN_ID" \
+            --base-sha "$PR_BASE_SHA" \
+            --head-sha "$PR_HEAD_SHA" \
+            --github-output "$GITHUB_OUTPUT"
+          cat "$RUNNER_TEMP/kyvernaut-scoped-plan/summary.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload immutable selection audit
+        if: steps.pause.outputs.paused != 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: kyvernaut-scoped-selection-${{ github.event.pull_request.number }}-${{ github.run_id }}
+          path: ${{ runner.temp }}/kyvernaut-scoped-plan
+          retention-days: 30
+
+  unit:
+    name: Unit · ${{ matrix.package }}
+    needs: plan
+    if: >-
+      needs.plan.outputs.assistant_enabled == 'true' &&
+      needs.plan.outputs.unit_count != '0'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan.outputs.unit_matrix) }}
+    steps:
+      - name: Checkout pull request merge commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Go
+        uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
+        with:
+          go-version-file: go.mod
+          cache: false
+      - name: Run selected Go packages
+        env:
+          TEST_PACKAGE: ${{ matrix.package }}
+        run: go test -race -count=1 "$TEST_PACKAGE"
+
+  cli:
+    name: CLI · selected scope
+    needs: plan
+    if: >-
+      needs.plan.outputs.assistant_enabled == 'true' &&
+      needs.plan.outputs.run_cli == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout pull request merge commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Go
+        uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
+        with:
+          go-version-file: go.mod
+          cache: false
+      - name: Run CLI test suite
+        env:
+          TEST_GIT_BRANCH: ${{ github.base_ref }}
+          VERSION: ${{ github.base_ref }}
+        run: make test-cli
+
+  images:
+    name: Build images for scoped conformance
+    needs: plan
+    if: >-
+      needs.plan.outputs.assistant_enabled == 'true' &&
+      needs.plan.outputs.conformance_count != '0'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout pull request merge commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Go
+        uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
+        with:
+          go-version-file: go.mod
+          cache: false
+      - name: Install pinned ko
+        uses: ko-build/setup-ko@d006021bd0c28d1ce33a07e7943d48b079944c8d # v0.9
+      - name: Build test image archive from the merge commit
+        run: VERSION=main make docker-save-image-all
+      - name: Upload test image archive
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: kyverno.tar
+          path: kyverno.tar
+          retention-days: 1
+          if-no-files-found: error
+
+  conformance:
+    name: Chainsaw · ${{ matrix.suite }} · ${{ matrix.kubernetes_version }}
+    needs: [plan, images]
+    if: >-
+      needs.plan.outputs.assistant_enabled == 'true' &&
+      needs.plan.outputs.conformance_count != '0'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      actions: read
+      contents: read
+      packages: read
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan.outputs.conformance_matrix) }}
+    steps:
+      - name: Checkout pull request merge commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Run selected Chainsaw scope
+        uses: ./.github/actions/tests/conformance/run
+        with:
+          k8s-version: ${{ matrix.kubernetes_version }}
+          kind-config: ${{ matrix.kind_config }}
+          kyverno-configs: ${{ matrix.kyverno_configs }}
+          quarantined-tests: ${{ matrix.quarantined_tests }}
+          install-openreports: ${{ matrix.install_openreports }}
+          install-kubectl-evict: ${{ matrix.install_kubectl_evict }}
+          tests-path: ${{ matrix.suite }}
+          # Satisfy the composite input contract without exposing the job's
+          # read token to tests from the pull request.
+          token: disabled
+      - name: Delete scoped KinD cluster
+        if: always()
+        run: kind delete cluster --name kind || true
