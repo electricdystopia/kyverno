@@ -1,0 +1,344 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+
+name: Kyvernaut dependency merge
+
+on:
+  schedule:
+    - cron: "17,47 * * * *"
+  workflow_dispatch: {}
+
+# This is the only Kyvernaut workflow with merge authority. The ephemeral
+# repository token is restricted to reading CI and updating pull requests and
+# contents; no workflow, administration, package, deployment, or secret access
+# is granted.
+permissions:
+  checks: read
+  contents: write
+  pull-requests: write
+  statuses: read
+
+concurrency:
+  group: kyvernaut-dependency-merge
+  cancel-in-progress: false
+
+jobs:
+  merge:
+    name: Revalidate and merge eligible dependency PRs
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check repository kill switch
+        id: pause
+        shell: bash
+        env:
+          PAUSE_VALUE: ${{ vars.KYVERNAUT_PAUSED }}
+        run: |
+          value="${PAUSE_VALUE//[[:space:]]/}"
+          value="${value,,}"
+          case "$value" in
+            1|true|yes|on) echo "paused=true" >> "$GITHUB_OUTPUT" ;;
+            *) echo "paused=false" >> "$GITHUB_OUTPUT" ;;
+          esac
+
+      - name: Checkout trusted default branch
+        if: steps.pause.outputs.paused != 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+
+      - name: Set up Python
+        if: steps.pause.outputs.paused != 'true'
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: kyvernaut/requirements-runtime.txt
+
+      - name: Install hash-locked runtime dependency
+        if: steps.pause.outputs.paused != 'true'
+        run: >-
+          python -m pip install
+          --only-binary=:all:
+          --require-hashes
+          --requirement kyvernaut/requirements-runtime.txt
+
+      - name: Collect bounded dependency PR evidence
+        if: steps.pause.outputs.paused != 'true'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          CANDIDATES_JSON: ${{ runner.temp }}/kyvernaut-dependency-candidates.json
+        with:
+          script: |
+            const fs = require("fs");
+            const allowedActors = new Set(["dependabot[bot]", "renovate[bot]"]);
+            const openPulls = await github.rest.pulls.list({
+              ...context.repo,
+              state: "open",
+              base: context.payload.repository.default_branch,
+              sort: "created",
+              direction: "asc",
+              per_page: 50,
+            });
+            const candidates = [];
+            const goodCheckConclusions = new Set(["success", "neutral", "skipped"]);
+            const supportedMergeableStates = new Set([
+              "behind",
+              "blocked",
+              "clean",
+              "dirty",
+              "unstable",
+            ]);
+            for (const listed of openPulls.data) {
+              if (!allowedActors.has(listed.user?.login?.toLowerCase())) {
+                continue;
+              }
+              const pull = await github.rest.pulls.get({
+                ...context.repo,
+                pull_number: listed.number,
+              });
+              const pr = pull.data;
+              const files = await github.paginate(github.rest.pulls.listFiles, {
+                ...context.repo,
+                pull_number: pr.number,
+                per_page: 100,
+              });
+              const checks = await github.paginate(github.rest.checks.listForRef, {
+                ...context.repo,
+                ref: pr.head.sha,
+                per_page: 100,
+              });
+              const combinedStatus = await github.rest.repos.getCombinedStatusForRef({
+                ...context.repo,
+                ref: pr.head.sha,
+              });
+              const hasChecks = checks.length > 0;
+              const hasStatuses = combinedStatus.data.total_count > 0;
+              let ciState = "unknown";
+              if (hasChecks || hasStatuses) {
+                const pending =
+                  checks.some((check) => check.status !== "completed") ||
+                  (hasStatuses && combinedStatus.data.state === "pending");
+                const failed =
+                  checks.some((check) =>
+                    check.status === "completed" &&
+                    !goodCheckConclusions.has(check.conclusion)
+                  ) ||
+                  (hasStatuses && ["failure", "error"].includes(combinedStatus.data.state));
+                ciState = failed ? "failure" : pending ? "pending" : "success";
+              }
+              const mergeableState = supportedMergeableStates.has(pr.mergeable_state)
+                ? pr.mergeable_state
+                : "unknown";
+              candidates.push({
+                pull_request: {
+                  number: pr.number,
+                  html_url: pr.html_url,
+                  title: pr.title,
+                  body: pr.body || "",
+                  state: pr.state,
+                  draft: Boolean(pr.draft),
+                  user: { login: pr.user?.login || null },
+                  base: { ref: pr.base.ref },
+                  head: { sha: pr.head.sha },
+                  labels: pr.labels.map((label) => ({ name: label.name })),
+                },
+                changed_files: files.map((file) => file.filename).sort(),
+                ci_state: ciState,
+                mergeable_state: mergeableState,
+              });
+            }
+            fs.writeFileSync(process.env.CANDIDATES_JSON, JSON.stringify(candidates));
+
+      - name: Build capped merge batch
+        if: steps.pause.outputs.paused != 'true'
+        id: batch
+        env:
+          KYVERNAUT_PAUSED: ${{ vars.KYVERNAUT_PAUSED }}
+        run: |
+          python kyvernaut/dependency_batch.py \
+            --candidates "$RUNNER_TEMP/kyvernaut-dependency-candidates.json" \
+            --output "$RUNNER_TEMP/kyvernaut-dependency-audit/decision-batch.json" \
+            --run-id "$GITHUB_RUN_ID" \
+            --run-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            --github-output "$GITHUB_OUTPUT"
+
+      - name: Revalidate evidence and execute authorized merges
+        if: >-
+          steps.pause.outputs.paused != 'true' &&
+          steps.batch.outputs.assistant_enabled == 'true' &&
+          steps.batch.outputs.action_count != '0'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          BATCH_JSON: ${{ runner.temp }}/kyvernaut-dependency-audit/decision-batch.json
+          EXECUTION_JSON: ${{ runner.temp }}/kyvernaut-dependency-audit/execution.json
+        with:
+          script: |
+            const crypto = require("crypto");
+            const fs = require("fs");
+            const batch = JSON.parse(fs.readFileSync(process.env.BATCH_JSON, "utf8"));
+            if (
+              batch.mode !== "active" ||
+              batch.merge_method !== "squash" ||
+              batch.actions.length > batch.max_merges_per_run ||
+              batch.max_merges_per_run < 1 ||
+              batch.max_merges_per_run > 10
+            ) {
+              throw new Error("merge batch violates executor invariants");
+            }
+            const results = [];
+            const goodCheckConclusions = new Set(["success", "neutral", "skipped"]);
+            for (const action of batch.actions) {
+              const result = {
+                pull_request_number: action.pull_request_number,
+                decision_id: action.decision_id,
+                expected_head_sha: action.head_sha,
+                status: "skipped",
+              };
+              try {
+                const response = await github.rest.pulls.get({
+                  ...context.repo,
+                  pull_number: action.pull_request_number,
+                });
+                const pr = response.data;
+                const files = await github.paginate(github.rest.pulls.listFiles, {
+                  ...context.repo,
+                  pull_number: pr.number,
+                  per_page: 100,
+                });
+                const labels = pr.labels.map((label) => label.name).sort();
+                const changedFiles = files.map((file) => file.filename).sort();
+                const bodyHash = crypto
+                  .createHash("sha256")
+                  .update(pr.body || "", "utf8")
+                  .digest("hex");
+                const evidenceChanged =
+                  pr.state !== "open" ||
+                  Boolean(pr.draft) ||
+                  pr.head.sha !== action.head_sha ||
+                  pr.user?.login !== action.expected.author ||
+                  pr.base.ref !== action.expected.base_branch ||
+                  pr.title !== action.expected.title ||
+                  bodyHash !== action.expected.body_sha256 ||
+                  JSON.stringify(labels) !== JSON.stringify(action.expected.labels) ||
+                  JSON.stringify(changedFiles) !==
+                    JSON.stringify(action.expected.changed_files);
+                if (evidenceChanged) {
+                  result.reason = "pull request evidence changed after authorization";
+                  results.push(result);
+                  continue;
+                }
+
+                const checks = await github.paginate(github.rest.checks.listForRef, {
+                  ...context.repo,
+                  ref: pr.head.sha,
+                  per_page: 100,
+                });
+                const combinedStatus = await github.rest.repos.getCombinedStatusForRef({
+                  ...context.repo,
+                  ref: pr.head.sha,
+                });
+                const hasChecks = checks.length > 0;
+                const hasStatuses = combinedStatus.data.total_count > 0;
+                const pending =
+                  checks.some((check) => check.status !== "completed") ||
+                  (hasStatuses && combinedStatus.data.state === "pending");
+                const failed =
+                  checks.some((check) =>
+                    check.status === "completed" &&
+                    !goodCheckConclusions.has(check.conclusion)
+                  ) ||
+                  (hasStatuses && ["failure", "error"].includes(combinedStatus.data.state));
+                if (!hasChecks && !hasStatuses || pending || failed) {
+                  result.reason = "CI is no longer fully green";
+                  results.push(result);
+                  continue;
+                }
+                if (pr.mergeable_state !== "clean") {
+                  result.reason = `mergeable state is ${pr.mergeable_state || "unknown"}`;
+                  results.push(result);
+                  continue;
+                }
+
+                // Close the label/title/body time-of-check gap created while
+                // fetching checks. File content is already pinned by head SHA.
+                const finalResponse = await github.rest.pulls.get({
+                  ...context.repo,
+                  pull_number: action.pull_request_number,
+                });
+                const finalPr = finalResponse.data;
+                const finalLabels = finalPr.labels.map((label) => label.name).sort();
+                const finalBodyHash = crypto
+                  .createHash("sha256")
+                  .update(finalPr.body || "", "utf8")
+                  .digest("hex");
+                const finalEvidenceChanged =
+                  finalPr.state !== "open" ||
+                  Boolean(finalPr.draft) ||
+                  finalPr.head.sha !== action.head_sha ||
+                  finalPr.user?.login !== action.expected.author ||
+                  finalPr.base.ref !== action.expected.base_branch ||
+                  finalPr.title !== action.expected.title ||
+                  finalBodyHash !== action.expected.body_sha256 ||
+                  JSON.stringify(finalLabels) !== JSON.stringify(action.expected.labels) ||
+                  finalPr.mergeable_state !== "clean";
+                if (finalEvidenceChanged) {
+                  result.reason = "pull request metadata changed during final revalidation";
+                  results.push(result);
+                  continue;
+                }
+
+                const merge = await github.rest.pulls.merge({
+                  ...context.repo,
+                  pull_number: pr.number,
+                  sha: action.head_sha,
+                  merge_method: batch.merge_method,
+                });
+                result.status = merge.data.merged ? "merged" : "rejected";
+                result.reason = merge.data.message;
+                result.merge_sha = merge.data.sha || null;
+                if (merge.data.merged) {
+                  try {
+                    await github.rest.issues.createComment({
+                      ...context.repo,
+                      issue_number: pr.number,
+                      body:
+                        "<!-- kyvernaut:dependency-merge:v1 -->\n" +
+                        `Kyvernaut merged this dependency update after revalidating ` +
+                        `decision \`${action.decision_id}\`. ` +
+                        `[Audit run](${batch.run_url}).`,
+                    });
+                    result.audit_comment = "created";
+                  } catch (commentError) {
+                    result.audit_comment = "failed";
+                    result.audit_comment_error = commentError.message;
+                  }
+                }
+              } catch (error) {
+                result.status = "api_error";
+                result.reason = error.message;
+              }
+              results.push(result);
+            }
+            fs.writeFileSync(
+              process.env.EXECUTION_JSON,
+              JSON.stringify(
+                {
+                  schema_version: 1,
+                  run_id: batch.run_id,
+                  run_url: batch.run_url,
+                  merge_method: batch.merge_method,
+                  results,
+                },
+                null,
+                2
+              ) + "\n"
+            );
+
+      - name: Upload immutable dependency audit
+        if: always() && steps.pause.outputs.paused != 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: kyvernaut-dependency-merge-${{ github.run_id }}
+          path: ${{ runner.temp }}/kyvernaut-dependency-audit
+          retention-days: 90

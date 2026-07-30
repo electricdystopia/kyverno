@@ -1,0 +1,149 @@
+# Kyvernaut repository policy.
+#
+# Safe default: the assistant is enabled only for shadow evaluation. The
+# dependency executor exists but cannot authorize a merge until a reviewed
+# configuration change switches the repository to active mode.
+version: 1
+enabled: true
+mode: shadow
+
+kill_switch:
+  environment_variable: KYVERNAUT_PAUSED
+  truthy_values: ["1", "true", "yes", "on"]
+
+dependency_updates:
+  enabled: true
+  max_merges_per_run: 3
+  merge_method: squash
+  actors:
+    - "dependabot[bot]"
+    - "renovate[bot]"
+  base_branches:
+    - main
+  allowed_update_types:
+    - patch
+    - minor
+  allowed_files:
+    - go.mod
+    - go.sum
+  hold_labels:
+    - hold
+    - do-not-merge
+    - "kyvernaut:hold"
+  breaking_change_markers:
+    - "breaking change"
+    - "breaking-change"
+    - "backward incompatible"
+    - "migration required"
+  require_green_ci: true
+  require_mergeable: true
+
+pr_hygiene:
+  enabled: true
+  base_branches:
+    - main
+  hold_labels:
+    - hold
+    - do-not-merge
+    - "kyvernaut:hold"
+    - "kyvernaut:no-nudge"
+  stale_after_days: 14
+  reviewer_nudge_after_days: 7
+  nudge_cooldown_days: 7
+  max_nudges_per_run: 10
+  suggest_branch_update: true
+
+scoped_ci:
+  enabled: true
+  max_unit_jobs: 12
+  max_conformance_jobs: 8
+  kubernetes_version: v1.35.1
+  expand_uncertain_scope: true
+
+issue_triage:
+  enabled: true
+  apply_labels: true
+  max_labels_per_issue: 4
+  excluded_labels:
+    - security
+    - "kyvernaut:no-triage"
+  managed_labels:
+    - bug
+    - enhancement
+    - question
+    - triage
+    - "type:cli"
+    - "area/webhooks"
+  suggested_labels:
+    bug: [bug, triage]
+    feature: [enhancement, triage]
+    question: [question, triage]
+    unknown: [triage]
+    cli: ["type:cli"]
+    webhook: ["area/webhooks"]
+
+issue_reproduction:
+  # Execution exists behind this flag, the global active-mode gate, a
+  # maintainer label, static validation, and a separate ephemeral KinD job.
+  enabled: false
+  approval_labels:
+    - "kyvernaut:repro-approved"
+  sandbox_namespace: kyvernaut-repro
+  max_runtime_seconds: 180
+  max_output_bytes: 1048576
+  max_pods: 10
+  max_cpu_millicores: 2000
+  max_memory_mebibytes: 2048
+  max_body_bytes: 65536
+  max_documents: 20
+  max_manifest_bytes: 49152
+  allowed_kinds:
+    - ConfigMap
+    - Service
+    - Pod
+    - Deployment
+    - Policy
+    - ClusterPolicy
+    - ValidatingPolicy
+    - NamespacedValidatingPolicy
+    - MutatingPolicy
+    - NamespacedMutatingPolicy
+    - ImageValidatingPolicy
+    - NamespacedImageValidatingPolicy
+    - GeneratingPolicy
+    - NamespacedGeneratingPolicy
+    - DeletingPolicy
+    - NamespacedDeletingPolicy
+  allowed_images:
+    - nginx
+    - nginx:latest
+    - busybox
+    - busybox:latest
+    - registry.k8s.io/pause:3.10
+
+documentation:
+  enabled: true
+  user_facing_paths:
+    - api/
+    - charts/
+    - cmd/
+    - pkg/admissionpolicy/
+    - pkg/background/
+    - pkg/cel/
+    - pkg/config/
+    - pkg/controllers/
+    - pkg/engine/
+    - pkg/policy/
+    - pkg/validation/
+    - pkg/webhooks/
+  documentation_paths:
+    - docs/
+    - README.md
+    - DEVELOPMENT.md
+    - CONTRIBUTING.md
+    - .github/pr_documentation.md
+  exempt_labels:
+    - docs-not-required
+    - kind/documentation
+    - "kyvernaut:docs-reviewed"
+  website_repository: kyverno/website

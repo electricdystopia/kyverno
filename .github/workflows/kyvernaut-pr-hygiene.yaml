@@ -1,0 +1,139 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+
+name: Kyvernaut PR hygiene
+
+on:
+  schedule:
+    - cron: "23 8 * * 1-5"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: kyvernaut-pr-hygiene
+  cancel-in-progress: false
+
+jobs:
+  nudge:
+    name: Scheduled comment-only hygiene
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check repository kill switch
+        id: pause
+        shell: bash
+        env:
+          PAUSE_VALUE: ${{ vars.KYVERNAUT_PAUSED }}
+        run: |
+          value="${PAUSE_VALUE//[[:space:]]/}"
+          value="${value,,}"
+          case "$value" in
+            1|true|yes|on) echo "paused=true" >> "$GITHUB_OUTPUT" ;;
+            *) echo "paused=false" >> "$GITHUB_OUTPUT" ;;
+          esac
+
+      - name: Checkout trusted default branch
+        if: steps.pause.outputs.paused != 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+
+      - name: Set up Python
+        if: steps.pause.outputs.paused != 'true'
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: kyvernaut/requirements-runtime.txt
+
+      - name: Install hash-locked runtime dependency
+        if: steps.pause.outputs.paused != 'true'
+        run: >-
+          python -m pip install
+          --only-binary=:all:
+          --require-hashes
+          --requirement kyvernaut/requirements-runtime.txt
+
+      - name: Collect oldest open pull requests
+        if: steps.pause.outputs.paused != 'true'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          PULLS_JSON: ${{ runner.temp }}/kyvernaut-open-prs.json
+        with:
+          script: |
+            const fs = require("fs");
+            const response = await github.rest.pulls.list({
+              ...context.repo,
+              state: "open",
+              sort: "updated",
+              direction: "asc",
+              per_page: 50,
+            });
+            fs.writeFileSync(process.env.PULLS_JSON, JSON.stringify(response.data));
+
+      - name: Generate capped hygiene batch
+        if: steps.pause.outputs.paused != 'true'
+        id: batch
+        env:
+          KYVERNAUT_PAUSED: ${{ vars.KYVERNAUT_PAUSED }}
+        run: |
+          python kyvernaut/hygiene_batch.py \
+            --pull-requests "$RUNNER_TEMP/kyvernaut-open-prs.json" \
+            --output "$RUNNER_TEMP/kyvernaut-hygiene/hygiene-decisions.json" \
+            --run-id "$GITHUB_RUN_ID" \
+            --run-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            --github-output "$GITHUB_OUTPUT"
+
+      - name: Upload immutable hygiene audit
+        if: steps.pause.outputs.paused != 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: kyvernaut-pr-hygiene-${{ github.run_id }}
+          path: ${{ runner.temp }}/kyvernaut-hygiene
+          retention-days: 30
+
+      - name: Create cooldown-aware reminders
+        if: >-
+          steps.pause.outputs.paused != 'true' &&
+          steps.batch.outputs.assistant_enabled == 'true' &&
+          steps.batch.outputs.comment_count != '0'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          BATCH_JSON: ${{ runner.temp }}/kyvernaut-hygiene/hygiene-decisions.json
+        with:
+          script: |
+            const fs = require("fs");
+            const marker = "<!-- kyvernaut:pr-hygiene:v1 -->";
+            const batch = JSON.parse(fs.readFileSync(process.env.BATCH_JSON, "utf8"));
+            const cooldownMs = batch.cooldown_days * 24 * 60 * 60 * 1000;
+            for (const reminder of batch.comments) {
+              const issue_number = reminder.pull_request_number;
+              const comments = await github.paginate(github.rest.issues.listComments, {
+                ...context.repo,
+                issue_number,
+                per_page: 100,
+              });
+              const existing = comments.find((comment) =>
+                comment.user?.login === "github-actions[bot]" &&
+                comment.body?.includes(marker)
+              );
+              if (existing) {
+                const ageMs = Date.now() - Date.parse(existing.updated_at);
+                if (ageMs < cooldownMs || existing.body === reminder.body) {
+                  continue;
+                }
+                await github.rest.issues.updateComment({
+                  ...context.repo,
+                  comment_id: existing.id,
+                  body: reminder.body,
+                });
+              } else {
+                await github.rest.issues.createComment({
+                  ...context.repo,
+                  issue_number,
+                  body: reminder.body,
+                });
+              }
